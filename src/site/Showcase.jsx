@@ -6,6 +6,14 @@ import { Device } from './Device'
 import DemoSheet from './DemoSheet'
 import Odometer from './Odometer'
 import { useMedia, useViewport, morph } from './hooks'
+import bot from '../assets/img/shots/bot.jpg'
+import ai from '../assets/img/shots/ai.jpg'
+import landing from '../assets/img/shots/landing-m.jpg'
+import shop from '../assets/img/shots/shop-m.jpg'
+import admin from '../assets/img/shots/admin-m.jpg'
+import qr from '../assets/img/shots/qr-m.jpg'
+
+const POSTERS = { landing, shop, bot, admin, ai, qr }
 
 const N = WORK.length
 const PANEL = 88 // ширина панели ленты, vw
@@ -16,6 +24,7 @@ const PANEL = 88 // ширина панели ленты, vw
 // заголовок набирает раструбы, как на первом экране. Демо открывается на весь экран кнопкой «Попробовать».
 export default function Showcase() {
   const wide = useMedia('(min-width: 1000px)')
+  const touch = useMedia('(pointer: coarse)')
   const reduce = useReducedMotion()
   const [sheet, setSheet] = useState(null)
   const closeSheet = useCallback(() => setSheet(null), [])
@@ -28,7 +37,7 @@ export default function Showcase() {
       </div>
       {wide && !reduce
         ? <Track onTry={setSheet} />
-        : <div className="work-list">{WORK.map((w) => <Panel key={w.id} w={w} wide={wide} onTry={() => setSheet(w)} />)}</div>}
+        : <div className="work-list">{WORK.map((w) => <Panel key={w.id} w={w} wide={wide} poster={touch} onTry={() => setSheet(w)} />)}</div>}
       <DemoSheet demo={sheet} onClose={closeSheet} />
     </section>
   )
@@ -68,7 +77,7 @@ function Track({ onTry }) {
   )
 }
 
-function Panel({ w, i, pos, wide, onTry }) {
+function Panel({ w, i, pos, wide, poster, onTry }) {
   const { w: vw, h: vh } = useViewport()
   const ref = useRef(null)
   const reduce = useReducedMotion()
@@ -114,7 +123,7 @@ function Panel({ w, i, pos, wide, onTry }) {
       </motion.div>
       <div className="wb-device">
         <motion.div className="wb-turn" style={moving ? { rotateY: turn } : entering ? { rotateY: inTurn, rotateX: inTilt, y: inY, scale: inScale } : undefined}>
-          <Device kind={kind} src={w.src} title={`Демо: ${w.label}`} label={w.label} width={width} tint={w.tint} dark={w.statusDark} onTry={onTry} />
+          <Device kind={kind} src={w.src} title={`Демо: ${w.label}`} label={w.label} width={width} tint={w.tint} dark={w.statusDark} onTry={onTry} poster={poster && kind === 'phone' ? POSTERS[w.id] : undefined} />
         </motion.div>
         <a className="wb-label" href={w.src} target="_blank" rel="noreferrer">{w.label} <ArrowUpRight size={13} weight="bold" /></a>
       </div>

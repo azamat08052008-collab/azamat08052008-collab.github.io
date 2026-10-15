@@ -1,4 +1,4 @@
-// Снимки демо для 3D-веера в первом экране. Запуск при работающем `npm run dev` (порт 5192):
+// Снимки демо: для первого экрана и телефонные «-m» для витрины на сенсорных экранах. Запуск при работающем `npm run dev` (порт 5192):
 //   node scripts/shots.mjs
 // Нужен Google Chrome и playwright-core (devDependency).
 import { chromium } from 'playwright-core'
@@ -28,4 +28,8 @@ await shot('admin', base + '/demo/admin/', browser)
 await shot('bot', base + '/demo/bot/', phone, (p) => click(p, ['Начать', 'Записаться', 'Стрижка · 1 200 ₽']))
 await shot('ai', base + '/demo/ai/', phone, async (p) => { await click(p, ['Сколько стоит керамика?']); await p.waitForTimeout(3000) })
 await shot('qr', podacha + 'kofe/?t=4', phone)
+await shot('landing-m', base + '/demo/landing/', phone)
+await shot('shop-m', base + '/demo/shop/', phone)
+await shot('admin-m', base + '/demo/admin/', phone)
+await shot('qr-m', podacha, phone)
 await b.close()

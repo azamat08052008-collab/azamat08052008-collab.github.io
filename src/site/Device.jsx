@@ -47,7 +47,8 @@ export function TryButton({ title, onTry }) {
 }
 
 // Одиночное устройство: в первом экране и в мобильной версии витрины.
-export function Device({ kind, src, title, width, label, tint, dark, onTry }) {
+// poster — снимок вместо живого iframe: на телефоне шесть живых демо сразу Safari не тянет и показывает пустыми
+export function Device({ kind, src, title, width, label, tint, dark, onTry, poster }) {
   const phone = kind === 'phone'
   const h = deviceHeight(kind, width)
   return (
@@ -56,7 +57,9 @@ export function Device({ kind, src, title, width, label, tint, dark, onTry }) {
       <div className="dv-screen" style={{ width, height: h + (phone ? STATUS : 0) }}>
         {phone && <StatusBar tint={tint} dark={dark} />}
         <div className="dv-viewport" style={{ top: phone ? STATUS : 0 }}>
-          <Screen kind={kind} src={src} title={title} width={width} />
+          {poster
+            ? <img className="dv-poster" src={poster} alt={title} width={width} height={h} loading="lazy" draggable="false" />
+            : <Screen kind={kind} src={src} title={title} width={width} />}
         </div>
         <TryButton title={title} onTry={onTry} />
       </div>

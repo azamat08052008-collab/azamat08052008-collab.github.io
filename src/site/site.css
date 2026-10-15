@@ -116,6 +116,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .dv-screen::before { content: 'Загружаю пример…'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted); }
 .dv-frame { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; }
 .dv-viewport { position: absolute; left: 0; right: 0; bottom: 0; overflow: hidden; }
+.dv-poster { position: absolute; top: 0; left: 0; display: block; width: 100%; height: auto; }
 .dv-status { position: relative; height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 2px 22px 0 28px;
   font: 600 12px/1 -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #111; letter-spacing: -0.01em; }
 .dv-island { position: absolute; left: 50%; top: 7px; width: 74px; height: 20px; translate: -50% 0; border-radius: 12px; background: #0c0e12; }
