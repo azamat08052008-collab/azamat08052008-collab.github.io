@@ -85,10 +85,10 @@ function Assistant() {
       <main className="ai-chat" aria-live="polite" ref={chat}>
         {msgs.map((m, i) => (
           <motion.div key={i} className={`ai-msg ${m.from === 'me' ? 'is-me' : ''}`}
-            initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            initial={reduce || i === 0 ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             {i === 0 && <img className="ai-photo" src={studio} alt="Зал студии «Прана»" />}
             {m.from === 'ai'
-              ? (m.text ? m.text.split(' ').map((w, k) => <span key={k} className="ai-w">{w} </span>) : <span className="ai-dots"><i /><i /><i /></span>)
+              ? (m.text ? m.text.split(' ').map((w, k) => <span key={k} className={i === 0 ? undefined : 'ai-w'}>{w} </span>) : <span className="ai-dots"><i /><i /><i /></span>)
               : m.text}
             {m.follow === 'trial' && (
               <div className="ai-slots">{TRIAL.map((t) => <button key={t} onClick={() => book(t)}>{t}</button>)}</div>

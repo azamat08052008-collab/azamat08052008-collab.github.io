@@ -39,16 +39,28 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .nav-links a:hover { color: var(--ink); }
 .nav-cta-text { margin-left: 2px; }
 
-/* Первый экран */
-.hero { max-width: 1320px; margin: 0 auto; padding: 32px var(--pad) 48px; display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 24px; align-items: center; min-height: calc(100dvh - 68px); }
+/* Первый экран: 3D-веер снимков демо и заголовок под ним */
+.hero { position: relative; min-height: calc(100dvh - 68px); padding: 8px var(--pad) 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: clip; }
+.fan-scene { width: 100%; height: 410px; perspective: 1500px; perspective-origin: 50% 30%; display: grid; place-items: center; }
+.fan-fit, .fan, .fan-slot, .fan-lift { transform-style: preserve-3d; }
+.fan-fit { position: relative; width: 0; height: 0; }
+.fan { position: absolute; left: 0; top: 0; }
+.fan-slot { position: absolute; left: 0; top: 0; }
+.fan-lift { width: 100%; height: 100%; }
+.fan-card { position: relative; display: block; width: 100%; height: 100%; background: #fff; border-radius: 14px; box-shadow: 0 30px 60px -24px rgb(18 21 28 / 0.4), 0 0 0 1px rgb(18 21 28 / 0.08); }
+.fan-card img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: inherit; user-select: none; }
+.fan-phone { background: var(--ink); padding: 7px; border-radius: 30px; }
+.fan-phone img { border-radius: 23px; }
+.fan-tag { position: absolute; left: 50%; top: calc(100% + 14px); translate: -50% 6px; display: flex; gap: 8px; white-space: nowrap; padding: 7px 14px; border-radius: 999px;
+  background: var(--ink); color: #fff; font-size: 13px; opacity: 0; transition: opacity 200ms ease-out, translate 200ms ease-out; pointer-events: none; }
+.fan-tag b { font-weight: 600; }
+.fan-card:hover .fan-tag, .fan-card:focus-visible .fan-tag { opacity: 1; translate: -50% 0; }
+
+.hero-copy { position: relative; z-index: 1; text-align: center; max-width: 920px; margin-top: 30px; }
 .hero-who { font-family: var(--mono); font-size: 14px; color: var(--accent); font-weight: 500; }
-.hero h1 { font-weight: 800; font-size: clamp(42px, 5.4vw, 76px); line-height: 0.98; letter-spacing: -0.045em; margin-top: 18px; max-width: 11ch; }
-.hero-sub { color: var(--muted); font-size: 19px; max-width: 34ch; margin-top: 22px; }
-.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
-.hero-stage { perspective: 1600px; display: grid; place-items: center; }
-.hero-scene { position: relative; width: 640px; height: 560px; transform-style: preserve-3d; }
-.hero-browser { position: absolute; left: 0; top: 40px; }
-.hero-phone { position: absolute; right: 0; bottom: 0; }
+.hero h1 { font-weight: 800; font-size: clamp(44px, 6.2vw, 86px); line-height: 0.96; letter-spacing: -0.05em; margin-top: 14px; text-wrap: balance; }
+.hero-sub { color: var(--muted); font-size: 19px; max-width: 46ch; margin: 18px auto 0; }
+.hero-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
 
 /* Устройства */
 .dv { position: relative; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 40px 80px -30px rgb(18 21 28 / 0.35), 0 0 0 1px rgb(18 21 28 / 0.08); }
@@ -59,6 +71,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .dv-bar span, .st-bar span { margin: 0 auto; font-size: 12px; color: var(--muted); background: #fff; padding: 3px 14px; border-radius: 6px; white-space: nowrap; }
 .dv-screen, .st-screen { position: relative; overflow: hidden; background: #fff; }
 .dv-frame { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; }
+.dv-viewport { position: absolute; left: 0; right: 0; bottom: 0; overflow: hidden; }
+.dv-status { position: relative; height: 30px; display: flex; align-items: center; justify-content: space-between; padding: 2px 22px 0 28px;
+  font: 600 12px/1 -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #111; letter-spacing: -0.01em; }
+.dv-island { position: absolute; left: 50%; top: 7px; width: 74px; height: 20px; translate: -50% 0; border-radius: 12px; background: #0c0e12; }
+.dv-icons { display: flex; align-items: center; gap: 4px; }
 .dv-open { display: none; }
 /* На телефоне демо в рамке показываем картинкой: оно перехватывало бы прокрутку. По нажатию открывается целиком */
 @media (pointer: coarse) {
@@ -67,11 +84,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .dv-open span { background: var(--accent); color: #fff; font-size: 14px; font-weight: 600; padding: 10px 18px; border-radius: 10px; }
 }
 
-/* В первом экране демо как витрина: курсор наклоняет сцену, а нажатие открывает демо целиком */
-.hero .dv-frame { pointer-events: none; }
-.hero .dv-open { display: block; position: absolute; inset: 0; z-index: 1; }
-.hero .dv-open span { display: none; }
-.st-screen .dv-open { z-index: 2; }
+.st-layers .dv-open { z-index: 2; }
 
 /* Витрина */
 .work { max-width: 1320px; margin: 0 auto; padding: 100px var(--pad) 40px; }
@@ -87,6 +100,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .wb-price .mono { font-size: 30px; color: var(--accent); }
 .wb-term { color: var(--muted); font-size: 15px; }
 .wb-note { margin-top: 8px; font-size: 14px; color: var(--muted); }
+.wb-guest { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-weight: 600; color: var(--accent); }
+.wb-guest:hover { text-decoration: underline; }
 .wb-device { margin-top: 28px; display: grid; justify-items: center; gap: 12px; }
 .wb-label { font-size: 14px; color: var(--muted); }
 
@@ -95,8 +110,14 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .st-dev { background: #fff; overflow: hidden; box-shadow: 0 50px 100px -30px rgb(18 21 28 / 0.35), 0 0 0 1px rgb(18 21 28 / 0.08); display: flex; flex-direction: column; }
 .st-phone { background: var(--ink); }
 .st-bar { flex: none; }
-.st-screen { flex: 1; }
+.st-screen { flex: 1; display: flex; flex-direction: column; }
+.st-status { flex: none; overflow: hidden; }
+.st-layers { position: relative; flex: 1; overflow: hidden; }
 .st-layer { position: absolute; inset: 0; }
+.st-loading { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted);
+  background: linear-gradient(100deg, #f3f4f7 30%, #fafbfc 50%, #f3f4f7 70%) 0 0 / 200% 100%; animation: st-shimmer 1.4s linear infinite; }
+@keyframes st-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .st-loading { animation: none; } }
 .st-label { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 500; color: var(--accent); }
 .st-label:hover { text-decoration: underline; }
 
@@ -144,7 +165,8 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .footer-note { margin-left: auto; }
 
 @media (max-width: 1180px) {
-  .hero { grid-template-columns: 1fr; min-height: 0; padding-top: 48px; }
+  .fan-fit { scale: 0.8; }
+  .fan-scene { height: 350px; }
   .work-grid { grid-template-columns: minmax(0, 1fr) 560px; }
 }
 @media (max-width: 999.98px) {
@@ -156,9 +178,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 @media (max-width: 760px) {
   .nav-links { display: none; }
   .nav .btn { margin-left: auto; }
-  .hero-scene { width: min(343px, 100%); height: 470px; }
-  .hero-browser { top: 0; left: -8px; scale: 0.6; transform-origin: left top; }
-  .hero-phone { right: 0; bottom: 0; scale: 0.78; transform-origin: right bottom; }
+  .fan-fit { scale: 0.5; }
+  .fan-scene { height: 250px; }
+  .hero { min-height: 0; padding-top: 24px; }
 }
 @media (max-width: 600px) {
   :root { --pad: 16px; }

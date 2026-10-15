@@ -1,14 +1,12 @@
-import { useRef, useState } from 'react'
-import { motion, AnimatePresence, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
+import { useState } from 'react'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { TelegramLogo } from '@phosphor-icons/react/dist/csr/TelegramLogo'
-import { ArrowDown } from '@phosphor-icons/react/dist/csr/ArrowDown'
 import { EnvelopeSimple } from '@phosphor-icons/react/dist/csr/EnvelopeSimple'
-import { Device } from './Device'
+import Hero from './Hero'
 import Showcase from './Showcase'
 import { PRICES, TG, EMAIL } from './data'
 
 const ease = [0.16, 1, 0.3, 1]
-const fadeUp = { hide: { opacity: 0, y: 26 }, show: { opacity: 1, y: 0, transition: { duration: 0.75, ease } } }
 
 function Reveal({ children, className, delay = 0 }) {
   const reduce = useReducedMotion()
@@ -48,54 +46,6 @@ export default function App() {
         <span className="footer-note">Цены действуют с сентября 2026</span>
       </footer>
     </>
-  )
-}
-
-function Hero() {
-  const ref = useRef(null)
-  const reduce = useReducedMotion()
-  const px = useMotionValue(0)
-  const py = useMotionValue(0)
-  const rotY = useSpring(useTransform(px, [-1, 1], [-8, 8]), { stiffness: 110, damping: 20 })
-  const rotX = useSpring(useTransform(py, [-1, 1], [6, -6]), { stiffness: 110, damping: 20 })
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const browserY = useTransform(scrollYProgress, [0, 1], [0, 90])
-  const phoneY = useTransform(scrollYProgress, [0, 1], [0, -70])
-
-  function onMove(e) {
-    if (reduce || e.pointerType !== 'mouse') return
-    const r = e.currentTarget.getBoundingClientRect()
-    px.set(((e.clientX - r.left) / r.width) * 2 - 1)
-    py.set(((e.clientY - r.top) / r.height) * 2 - 1)
-  }
-
-  return (
-    <section className="hero" ref={ref}>
-      <motion.div className="hero-copy" initial={reduce ? false : 'hide'} animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }}>
-        <motion.p variants={fadeUp} className="hero-who">Привет, я Азамат, разработчик</motion.p>
-        <motion.h1 variants={fadeUp}>Сайты, боты и&nbsp;приложения</motion.h1>
-        <motion.p variants={fadeUp} className="hero-sub">Под ключ для малого бизнеса, от макета до запуска. Ниже живые примеры: их можно потрогать.</motion.p>
-        <motion.div variants={fadeUp} className="hero-cta">
-          <a className="btn btn-primary" href="#work">Смотреть примеры <ArrowDown size={18} weight="bold" /></a>
-          <a className="btn btn-ghost" href={TG} target="_blank" rel="noreferrer"><TelegramLogo size={20} weight="fill" /> Написать в Telegram</a>
-        </motion.div>
-      </motion.div>
-
-      <div className="hero-stage" onPointerMove={onMove} onPointerLeave={() => { px.set(0); py.set(0) }}>
-        <motion.div className="hero-scene" style={reduce ? undefined : { rotateY: rotY, rotateX: rotX }}>
-          <motion.div className="hero-browser" style={reduce ? undefined : { y: browserY }}>
-            <motion.div initial={reduce ? false : { opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease, delay: 0.1 }}>
-              <Device kind="browser" src="./demo/shop/" title="Демо интернет-магазина" width={540} label="Магазин керамики «Глина»" />
-            </motion.div>
-          </motion.div>
-          <motion.div className="hero-phone" style={reduce ? undefined : { y: phoneY, z: 50 }}>
-            <motion.div initial={reduce ? false : { opacity: 0, y: 70 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease, delay: 0.3 }}>
-              <Device kind="phone" src="./demo/bot/" title="Демо Telegram-бота" width={230} />
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
   )
 }
 

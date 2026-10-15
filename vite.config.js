@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'node:path'
 
-// Резюме + четыре демо отдельными страницами: /demo/shop/, /demo/bot/, /demo/ai/, /demo/admin/
+// Резюме + пять демо отдельными страницами: /demo/shop/, /demo/bot/, /demo/ai/, /demo/admin/, /demo/landing/
 const page = (p) => resolve(import.meta.dirname, p)
 export default defineConfig({
   base: './',
@@ -15,6 +15,7 @@ export default defineConfig({
         bot: page('demo/bot/index.html'),
         ai: page('demo/ai/index.html'),
         admin: page('demo/admin/index.html'),
+        landing: page('demo/landing/index.html'),
       },
     },
   },
