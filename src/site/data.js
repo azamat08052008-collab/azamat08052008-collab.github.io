@@ -1,6 +1,8 @@
 // Цены и сроки из прайс-листа 2026 (~/Projects/Свои/portfolio). QR-меню в прайсе нет: цена как на «Подаче».
 export const TG = 'https://t.me/galossn'
 export const EMAIL = 'azamat08052008@gmail.com'
+export const WA_PHONE = '+7 917 930-61-35'
+export const WA = 'https://wa.me/79179306135?text=' + encodeURIComponent('Здравствуйте! Пишу с вашего сайта')
 const PODACHA = 'https://azamat08052008-collab.github.io/podacha/'
 
 export const WORK = [

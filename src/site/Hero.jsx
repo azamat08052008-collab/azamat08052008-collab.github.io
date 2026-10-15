@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { motion, animate, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { TelegramLogo } from '@phosphor-icons/react/dist/csr/TelegramLogo'
+import { WhatsappLogo } from '@phosphor-icons/react/dist/csr/WhatsappLogo'
 import { ArrowDown } from '@phosphor-icons/react/dist/csr/ArrowDown'
-import { WORK, TG } from './data'
+import { WORK, TG, WA } from './data'
 import landing from '../assets/img/shots/landing.jpg'
 import shop from '../assets/img/shots/shop.jpg'
 import admin from '../assets/img/shots/admin.jpg'
@@ -87,7 +88,10 @@ export default function Hero() {
         <motion.p variants={fadeUp} className="hero-sub">Под ключ для малого бизнеса, от макета до запуска. Нажмите на пример или листайте ниже: всё работает по-настоящему.</motion.p>
         <motion.div variants={fadeUp} className="hero-cta">
           <a className="btn btn-primary" href="#work">Смотреть примеры <ArrowDown size={18} weight="bold" /></a>
-          <a className="btn btn-ghost" href={TG} target="_blank" rel="noreferrer"><TelegramLogo size={20} weight="fill" /> Написать в Telegram</a>
+          <span className="hero-msg">
+            <a className="btn btn-ghost" href={TG} target="_blank" rel="noreferrer"><TelegramLogo size={20} weight="fill" /> Telegram</a>
+            <a className="btn btn-ghost" href={WA} target="_blank" rel="noreferrer"><WhatsappLogo size={20} weight="fill" className="wa-ico" /> WhatsApp</a>
+          </span>
         </motion.div>
       </motion.div>
     </section>

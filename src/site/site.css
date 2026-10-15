@@ -30,6 +30,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .btn-light { background: #fff; color: var(--accent); }
 .btn-light:hover { transform: translateY(-2px); }
 .btn-sm { height: 44px; padding: 0 16px; font-size: 15px; }
+.nav-cta { display: flex; gap: 8px; }
+.btn-icon { width: 44px; padding: 0; }
+.wa-ico { color: #1fa855; }
+.btn-outline-light { color: #fff; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.7); }
+.btn-outline-light:hover { box-shadow: inset 0 0 0 1.5px #fff; transform: translateY(-2px); }
+.hero-msg { display: inline-flex; gap: 8px; }
 .btn-lg { height: 62px; padding: 0 30px; font-size: 18px; }
 
 /* Навигация */
@@ -206,7 +212,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 @media (max-width: 760px) {
   .nav-links { display: none; }
-  .nav .btn { margin-left: auto; }
+  .nav-cta { margin-left: auto; }
   .fan-fit { scale: 0.5; }
   .fan-scene { height: 250px; }
   .hero { min-height: 0; padding-top: 24px; }
@@ -215,7 +221,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   :root { --pad: 16px; }
   body { font-size: 16px; }
   .nav-cta-text { display: none; }
+  .logo { font-size: 16px; white-space: nowrap; }
   .hero-cta .btn { width: 100%; }
+  .hero-msg { width: 100%; }
+  .hero-msg .btn { flex: 1; }
   .work { padding-top: 72px; }
   .pr-grid { grid-template-columns: 1fr; }
   .about-cols { grid-template-columns: 1fr; }

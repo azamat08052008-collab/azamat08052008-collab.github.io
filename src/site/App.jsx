@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { motion, AnimatePresence, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
 import { TelegramLogo } from '@phosphor-icons/react/dist/csr/TelegramLogo'
+import { WhatsappLogo } from '@phosphor-icons/react/dist/csr/WhatsappLogo'
 import { EnvelopeSimple } from '@phosphor-icons/react/dist/csr/EnvelopeSimple'
 import Hero from './Hero'
 import Showcase from './Showcase'
 import Odometer from './Odometer'
-import { PRICES, TG, EMAIL } from './data'
+import { PRICES, TG, EMAIL, WA, WA_PHONE } from './data'
 
 const ease = [0.16, 1, 0.3, 1]
 
@@ -30,9 +31,14 @@ export default function App() {
           <a href="#price">Цены</a>
           <a href="#terms">Условия</a>
         </div>
-        <a className="btn btn-primary btn-sm" href={TG} target="_blank" rel="noreferrer" aria-label="Написать в Telegram">
-          <TelegramLogo size={18} weight="fill" /><span className="nav-cta-text">Написать в Telegram</span>
-        </a>
+        <div className="nav-cta">
+          <a className="btn btn-ghost btn-sm btn-icon" href={WA} target="_blank" rel="noreferrer" aria-label="Написать в WhatsApp">
+            <WhatsappLogo size={20} weight="fill" className="wa-ico" />
+          </a>
+          <a className="btn btn-primary btn-sm" href={TG} target="_blank" rel="noreferrer" aria-label="Написать в Telegram">
+            <TelegramLogo size={18} weight="fill" /><span className="nav-cta-text">Написать в Telegram</span>
+          </a>
+        </div>
       </nav>
       <main id="top">
         <Hero />
@@ -44,7 +50,8 @@ export default function App() {
       </main>
       <footer className="footer">
         <span>Азамат Назмутдинов, разработчик</span>
-        <a href={TG} target="_blank" rel="noreferrer">@galossn</a>
+        <a href={TG} target="_blank" rel="noreferrer">Telegram @galossn</a>
+        <a href={WA} target="_blank" rel="noreferrer">WhatsApp {WA_PHONE}</a>
         <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
         <span className="footer-note">Цены действуют с сентября 2026</span>
       </footer>
@@ -205,6 +212,7 @@ function Final() {
         <p className="lead">Ответ с вопросами, оценкой и сроком обычно в тот же день.</p>
         <div className="final-cta">
           <a className="btn btn-light btn-lg" href={TG} target="_blank" rel="noreferrer"><TelegramLogo size={22} weight="fill" /> Написать в Telegram</a>
+          <a className="btn btn-outline-light btn-lg" href={WA} target="_blank" rel="noreferrer"><WhatsappLogo size={22} weight="fill" /> Написать в WhatsApp</a>
           <a className="final-mail" href={`mailto:${EMAIL}`}><EnvelopeSimple size={18} /> {EMAIL}</a>
         </div>
       </Reveal>
