@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { motion, AnimatePresence, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
 import { TelegramLogo } from '@phosphor-icons/react/dist/csr/TelegramLogo'
 import { EnvelopeSimple } from '@phosphor-icons/react/dist/csr/EnvelopeSimple'
 import Hero from './Hero'
 import Showcase from './Showcase'
+import Odometer from './Odometer'
 import { PRICES, TG, EMAIL } from './data'
 
 const ease = [0.16, 1, 0.3, 1]
@@ -61,7 +62,7 @@ function Prices() {
       <div className="pr-tabs" role="tablist">
         {PRICES.map((g, i) => (
           <button key={g.group} role="tab" aria-selected={tab === i} className={tab === i ? 'is-on' : ''} onClick={() => setTab(i)}>
-            {tab === i && <motion.span layoutId="pr-tab" className="pr-tab-bg" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
+            {tab === i && <motion.span layoutId="pr-tab" className="pr-tab-bg" transition={{ type: 'spring', stiffness: 520, damping: 42 }} />}
             <span className="pr-tab-label">{g.group}</span>
           </button>
         ))}
@@ -74,21 +75,44 @@ function Prices() {
           initial={reduce ? false : 'hide'}
           animate="show"
           exit={reduce ? undefined : { opacity: 0, transition: { duration: 0.12 } }}
-          variants={{ show: { transition: { staggerChildren: 0.04 } } }}
+          variants={{ show: { transition: { staggerChildren: 0.06 } } }}
         >
           {PRICES[tab].rows.map(([name, desc, term, price]) => (
-            <motion.div key={name} className="pr-card" variants={{ hide: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease } } }}>
-              <h3>{name}</h3>
-              <p>{desc}</p>
-              <div className="pr-foot">
-                <span className="pr-term">{term}</span>
-                <span className="mono pr-price">{price}</span>
-              </div>
-            </motion.div>
+            <PriceCard key={name} name={name} desc={desc} term={term} price={price} reduce={reduce} />
           ))}
         </motion.div>
       </AnimatePresence>
     </section>
+  )
+}
+
+// Карточка цены: появляется, откидываясь сверху как табличка на табло, и наклоняется за курсором
+const flap = {
+  hide: { opacity: 0, rotateX: -75 },
+  show: { opacity: 1, rotateX: 0, transition: { type: 'spring', stiffness: 160, damping: 18 } },
+}
+function PriceCard({ name, desc, term, price, reduce }) {
+  const px = useMotionValue(0)
+  const py = useMotionValue(0)
+  const rotateY = useSpring(useTransform(px, [-0.5, 0.5], [-8, 8]), { stiffness: 220, damping: 20 })
+  const rotateX = useSpring(useTransform(py, [-0.5, 0.5], [7, -7]), { stiffness: 220, damping: 20 })
+  function onMove(e) {
+    if (reduce || e.pointerType !== 'mouse') return
+    const r = e.currentTarget.getBoundingClientRect()
+    px.set((e.clientX - r.left) / r.width - 0.5)
+    py.set((e.clientY - r.top) / r.height - 0.5)
+  }
+  return (
+    <motion.div className="pr-flap" variants={flap}>
+      <motion.div className="pr-card" style={reduce ? undefined : { rotateX, rotateY, transformPerspective: 900 }} onPointerMove={onMove} onPointerLeave={() => { px.set(0); py.set(0) }}>
+        <h3>{name}</h3>
+        <p>{desc}</p>
+        <div className="pr-foot">
+          <span className="pr-term">{term}</span>
+          <Odometer className="mono pr-price" value={price} />
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
@@ -111,7 +135,7 @@ function Terms() {
       </Reveal>
       <div className="terms-cards">
         <Reveal className="tc tc-accent" delay={0.05}>
-          <span className="mono">50%</span>
+          <Odometer className="mono" value="50%" />
           <h3>Оплата</h3>
           <p>Предоплата половины, остаток после приёмки. Крупные проекты по этапам.</p>
         </Reveal>

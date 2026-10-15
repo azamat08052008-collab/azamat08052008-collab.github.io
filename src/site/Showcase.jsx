@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence, useInView, useReducedMotion } from 'motion/react'
+import { motion, AnimatePresence, useAnimate, useInView, useMotionValue, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/csr/ArrowUpRight'
 import { WORK } from './data'
 import { Device, Screen, StatusBar, STATUS, deviceHeight } from './Device'
-
-const spring = { type: 'spring', stiffness: 170, damping: 26 }
+import Odometer from './Odometer'
 
 function useMedia(q) {
   const [on, setOn] = useState(() => matchMedia(q).matches)
@@ -25,6 +24,8 @@ export default function Showcase() {
   const W = { browser: roomy ? 620 : 520, phone: 280 }
   const [active, setActive] = useState(0)
   const [seen, setSeen] = useState(() => new Set([0]))
+  const list = useRef(null)
+  const { scrollYProgress } = useScroll({ target: list, offset: ['start center', 'end center'] })
 
   function activate(i) {
     setActive(i)
@@ -46,12 +47,12 @@ export default function Showcase() {
         <p className="lead">Нажимайте кнопки, оформляйте заказы, записывайтесь. Всё работает так же, как будет у вас.</p>
       </div>
       <div className="work-grid">
-        <div className="work-list">
+        <div className="work-list" ref={list}>
           {WORK.map((w, i) => (
             <Block key={w.id} w={w} active={wide && i === active} onActive={() => activate(i)} wide={wide} />
           ))}
         </div>
-        {wide && <Stage active={active} seen={seen} W={W} />}
+        {wide && <Stage active={active} seen={seen} W={W} progress={scrollYProgress} />}
       </div>
     </section>
   )
@@ -68,7 +69,7 @@ function Block({ w, active, onActive, wide }) {
       <p className="wb-pitch">{w.pitch}</p>
       <ul>{w.items.map((t) => <li key={t}>{t}</li>)}</ul>
       <div className="wb-price">
-        <span className="mono">{w.price}</span>
+        <Odometer className="mono" value={w.price} />
         <span className="wb-term">{w.term}</span>
       </div>
       {w.note && <p className="wb-note">{w.note}</p>}
@@ -83,10 +84,37 @@ function Block({ w, active, onActive, wide }) {
   )
 }
 
-function Stage({ active, seen, W }) {
+// Смена демо — переворот: устройство поворачивается ребром к зрителю, на ребре подменяется пример
+// и рамка (браузер или телефон), и устройство доворачивается уже с новым. Пока листаешь внутри одной
+// услуги, устройство слегка покачивается вслед за прокруткой и встаёт ровно к моменту переворота.
+function Stage({ active, seen, W, progress }) {
   const reduce = useReducedMotion()
   const [loaded, setLoaded] = useState(() => new Set())
-  const w = WORK[active]
+  const [shown, setShown] = useState(active)
+  const [, animate] = useAnimate()
+  const prev = useRef(active)
+  const turn = useMotionValue(0)
+  const shade = useTransform(turn, (v) => Math.min(Math.abs(v) / 90, 1) * 0.45)
+  const sway = useTransform(progress, (p) => Math.sin(p * WORK.length * Math.PI * 2) * 7)
+  const lift = useTransform(progress, (p) => Math.cos(p * WORK.length * Math.PI * 2) * -8)
+
+  useEffect(() => {
+    if (active === prev.current) return
+    const dir = active > prev.current ? 1 : -1
+    prev.current = active
+    if (reduce) { setShown(active); return }
+    let cancelled = false
+    ;(async () => {
+      await animate(turn, dir * 90, { duration: 0.22, ease: [0.55, 0, 0.85, 0.35] })
+      if (cancelled) return
+      setShown(active)
+      turn.set(-dir * 90)
+      await animate(turn, 0, { type: 'spring', stiffness: 110, damping: 15 })
+    })()
+    return () => { cancelled = true }
+  }, [active])
+
+  const w = WORK[shown]
   const kind = w.kind
   const width = W[kind]
   const height = deviceHeight(kind, width)
@@ -97,36 +125,36 @@ function Stage({ active, seen, W }) {
   return (
     <div className="stage">
       <div className="stage-inner">
-        <motion.div
-          className={`st-dev st-${kind}`}
-          initial={false}
-          animate={{ width: width + pad * 2, height: height + pad * 2 + bar + status, borderRadius: kind === 'phone' ? 46 : 14, padding: pad }}
-          transition={reduce ? { duration: 0 } : spring}
-        >
-          <motion.div className="st-bar" initial={false} animate={{ height: bar, opacity: bar ? 1 : 0 }} transition={reduce ? { duration: 0 } : spring}>
-            <i /><i /><i /><span>{w.label}</span>
-          </motion.div>
-          <motion.div className="st-screen" initial={false} animate={{ borderRadius: kind === 'phone' ? 36 : 0 }}>
-            <motion.div className="st-status" initial={false} animate={{ height: status, backgroundColor: w.tint }} transition={reduce ? { duration: 0 } : spring}>
-              <StatusBar tint="transparent" style={{ height: STATUS }} />
-            </motion.div>
-            <div className="st-layers">
-            {WORK.map((x, i) => seen.has(i) && (
-              <motion.div
-                key={x.id}
-                className="st-layer"
-                initial={false}
-                animate={{ opacity: i === active ? 1 : 0, scale: i === active || reduce ? 1 : 0.98 }}
-                transition={{ duration: reduce ? 0 : 0.45, delay: i === active && !reduce ? 0.15 : 0 }}
-                style={{ pointerEvents: i === active ? 'auto' : 'none', zIndex: i === active ? 1 : 0 }}
-              >
-                <Screen kind={x.kind} src={x.src} title={`Демо: ${x.label}`} width={W[x.kind]} active={i === active} scroll={x.scroll !== false}
-                  onLoad={() => setLoaded((l) => new Set(l).add(x.id))} />
-                {!loaded.has(x.id) && <div className="st-loading">Загружаю пример…</div>}
-              </motion.div>
-            ))}
-            <a className="dv-open" href={w.src} target="_blank" rel="noreferrer" aria-label={`Открыть демо: ${w.label}`}><span>Открыть демо</span></a>
+        <motion.div className="st-tilt" style={reduce ? undefined : { rotateY: sway, y: lift }}>
+          <motion.div
+            className={`st-dev st-${kind}`}
+            style={{
+              rotateY: turn,
+              width: width + pad * 2,
+              height: height + pad * 2 + bar + status,
+              borderRadius: kind === 'phone' ? 46 : 14,
+              padding: pad,
+            }}
+          >
+            {bar > 0 && <div className="st-bar"><i /><i /><i /><span>{w.label}</span></div>}
+            <div className="st-screen" style={{ borderRadius: kind === 'phone' ? 36 : 0 }}>
+              {status > 0 && <div className="st-status" style={{ background: w.tint }}><StatusBar tint="transparent" style={{ height: STATUS }} /></div>}
+              <div className="st-layers">
+                {WORK.map((x, i) => seen.has(i) && (
+                  <div
+                    key={x.id}
+                    className="st-layer"
+                    style={{ opacity: i === shown ? 1 : 0, pointerEvents: i === shown ? 'auto' : 'none', zIndex: i === shown ? 1 : 0 }}
+                  >
+                    <Screen kind={x.kind} src={x.src} title={`Демо: ${x.label}`} width={W[x.kind]} active={i === shown} scroll={x.scroll !== false}
+                      onLoad={() => setLoaded((l) => new Set(l).add(x.id))} />
+                    {!loaded.has(x.id) && <div className="st-loading">Загружаю пример…</div>}
+                  </div>
+                ))}
+                <a className="dv-open" href={w.src} target="_blank" rel="noreferrer" aria-label={`Открыть демо: ${w.label}`}><span>Открыть демо</span></a>
+              </div>
             </div>
+            <motion.div className="st-shade" style={{ opacity: shade }} aria-hidden="true" />
           </motion.div>
         </motion.div>
         <AnimatePresence mode="wait">
@@ -138,7 +166,7 @@ function Stage({ active, seen, W }) {
             rel="noreferrer"
             initial={reduce ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0, y: -8 }}
+            exit={reduce ? undefined : { opacity: 0, y: -8, transition: { duration: 0.12 } }}
           >
             {w.label} <ArrowUpRight size={14} weight="bold" />
           </motion.a>

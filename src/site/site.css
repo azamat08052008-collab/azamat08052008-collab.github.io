@@ -106,12 +106,15 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .wb-label { font-size: 14px; color: var(--muted); }
 
 .stage { position: relative; }
-.stage-inner { position: sticky; top: 68px; height: calc(100vh - 68px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
-.st-dev { background: #fff; overflow: hidden; box-shadow: 0 50px 100px -30px rgb(18 21 28 / 0.35), 0 0 0 1px rgb(18 21 28 / 0.08); display: flex; flex-direction: column; }
+.stage-inner { perspective: 1800px; position: sticky; top: 68px; height: calc(100vh - 68px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.st-tilt { transform-style: preserve-3d; }
+.st-dev { position: relative; background: #fff; overflow: hidden; box-shadow: 0 50px 100px -30px rgb(18 21 28 / 0.35), 0 0 0 1px rgb(18 21 28 / 0.08); display: flex; flex-direction: column; }
 .st-phone { background: var(--ink); }
 .st-bar { flex: none; }
 .st-screen { flex: 1; display: flex; flex-direction: column; }
-.st-status { flex: none; overflow: hidden; }
+.st-status { flex: none; overflow: hidden; height: 30px; }
+/* Затемнение ребра при перевороте: устройство «уходит в тень», как настоящий предмет */
+.st-shade { position: absolute; inset: 0; border-radius: inherit; background: #0c0e12; pointer-events: none; z-index: 3; }
 .st-layers { position: relative; flex: 1; overflow: hidden; }
 .st-layer { position: absolute; inset: 0; }
 .st-loading { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted);
@@ -128,9 +131,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .pr-tabs button.is-on { color: var(--on-accent); }
 .pr-tab-bg { position: absolute; inset: 0; border-radius: inherit; background: var(--ink); }
 .pr-tab-label { position: relative; }
-.pr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
-.pr-card { display: flex; flex-direction: column; background: var(--surface); border-radius: 16px; padding: 22px; box-shadow: 0 0 0 1px var(--line); min-height: 180px; transition: box-shadow 0.25s, transform 0.25s var(--ease); }
-.pr-card:hover { box-shadow: 0 0 0 1px var(--accent), 0 14px 30px -18px rgb(39 71 224 / 0.4); transform: translateY(-2px); }
+.pr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; perspective: 1200px; }
+.pr-flap { transform-origin: 50% 0; display: flex; }
+.pr-card { flex: 1; display: flex; flex-direction: column; background: var(--surface); border-radius: 16px; padding: 22px; box-shadow: 0 0 0 1px var(--line); min-height: 180px; transition: box-shadow 0.25s; }
+@media (hover: hover) { .pr-card:hover { box-shadow: 0 0 0 1px var(--accent), 0 18px 34px -18px rgb(39 71 224 / 0.45); } }
 .pr-card h3 { font-size: 19px; font-weight: 650; letter-spacing: -0.015em; }
 .pr-card p { color: var(--muted); font-size: 15px; margin-top: 6px; }
 .pr-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: auto; padding-top: 18px; }
@@ -195,3 +199,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .final { margin: 0 16px 32px; padding: 64px 20px; border-radius: 24px; }
   .footer-note { margin-left: 0; }
 }
+
+/* Табло: цифра — колонка из двадцати цифр, видна одна */
+.odo { display: inline-flex; align-items: baseline; line-height: 1; }
+.odo-col { display: inline-block; height: 1em; overflow: hidden; }
+.odo-strip { display: flex; flex-direction: column; }
+.odo-strip span { height: 1em; line-height: 1; }
