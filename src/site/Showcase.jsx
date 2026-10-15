@@ -49,7 +49,7 @@ export default function Showcase() {
       <div className="work-grid">
         <div className="work-list" ref={list}>
           {WORK.map((w, i) => (
-            <Block key={w.id} w={w} active={wide && i === active} onActive={() => activate(i)} wide={wide} />
+            <Block key={w.id} w={w} n={i + 1} active={wide && i === active} onActive={() => activate(i)} wide={wide} />
           ))}
         </div>
         {wide && <Stage active={active} seen={seen} W={W} progress={scrollYProgress} />}
@@ -58,13 +58,16 @@ export default function Showcase() {
   )
 }
 
-function Block({ w, active, onActive, wide }) {
+const pad2 = (n) => String(n).padStart(2, '0')
+
+function Block({ w, n, active, onActive, wide }) {
   const ref = useRef(null)
   const inView = useInView(ref, { margin: '-45% 0px -45% 0px' })
   useEffect(() => { if (inView) onActive() }, [inView])
 
   return (
     <article ref={ref} id={`w-${w.id}`} className={`wb ${active ? 'is-on' : ''}`}>
+      <div className="wb-num" aria-hidden="true">{pad2(n)}</div>
       <h3>{w.title}</h3>
       <p className="wb-pitch">{w.pitch}</p>
       <ul>{w.items.map((t) => <li key={t}>{t}</li>)}</ul>
@@ -157,20 +160,25 @@ function Stage({ active, seen, W, progress }) {
             <motion.div className="st-shade" style={{ opacity: shade }} aria-hidden="true" />
           </motion.div>
         </motion.div>
-        <AnimatePresence mode="wait">
-          <motion.a
-            key={w.id}
-            className="st-label"
-            href={w.src}
-            target="_blank"
-            rel="noreferrer"
-            initial={reduce ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0, y: -8, transition: { duration: 0.12 } }}
-          >
-            {w.label} <ArrowUpRight size={14} weight="bold" />
-          </motion.a>
-        </AnimatePresence>
+        {/* Номер примера и полоса: сколько пройдено и сколько впереди */}
+        <div className="st-foot">
+          <span className="st-count"><Odometer value={pad2(shown + 1)} /><span>/ {pad2(WORK.length)}</span></span>
+          <span className="st-track" aria-hidden="true"><motion.i style={{ scaleX: progress }} /></span>
+          <AnimatePresence mode="wait">
+            <motion.a
+              key={w.id}
+              className="st-label"
+              href={w.src}
+              target="_blank"
+              rel="noreferrer"
+              initial={reduce ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? undefined : { opacity: 0, y: -8, transition: { duration: 0.12 } }}
+            >
+              {w.label} <ArrowUpRight size={14} weight="bold" />
+            </motion.a>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   )

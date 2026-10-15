@@ -26,6 +26,7 @@ export default function App() {
         <a href="#top" className="logo">Азамат Назмутдинов</a>
         <div className="nav-links">
           <a href="#work">Примеры</a>
+          <a href="#about">Обо мне</a>
           <a href="#price">Цены</a>
           <a href="#terms">Условия</a>
         </div>
@@ -36,6 +37,7 @@ export default function App() {
       <main id="top">
         <Hero />
         <Showcase />
+        <About />
         <Prices />
         <Terms />
         <Final />
@@ -47,6 +49,47 @@ export default function App() {
         <span className="footer-note">Цены действуют с сентября 2026</span>
       </footer>
     </>
+  )
+}
+
+// Обо мне: только текст. Проекты — из заметок пользователя, без имён заказчиков
+const STEPS = [
+  ['Разбираю задачу', 'Короткая переписка или созвон. Задаю вопросы, чтобы понять, что нужно бизнесу, а не только сайту.'],
+  ['Считаю', 'Присылаю смету по этапам и срок, который фиксирую до старта.'],
+  ['Показываю по ходу', 'Вы видите промежуточные версии и правите их, а не ждёте финала вслепую.'],
+  ['Передаю', 'Исходники, доступы к хостингу и инструкция остаются у вас.'],
+]
+const DONE = [
+  'Сайт базы отдыха с видео на прокрутке',
+  'Интернет-магазин цветов с админкой заказов',
+  'Настольное приложение для руководителя сети АЗС',
+  'QR-меню с заказом к столу для кафе-паба',
+  'Telegram-бот для визажиста',
+  'Сайт мебельной фабрики',
+]
+
+function About() {
+  return (
+    <section className="about" id="about">
+      <Reveal className="about-lead">
+        <h2 className="h2">Делаю сам, от макета до запуска</h2>
+        <p className="lead">Вы общаетесь напрямую с тем, кто пишет код: без менеджеров и испорченного телефона. Сайты, боты, интеграции с 1С и CRM, маркетплейсы.</p>
+      </Reveal>
+      <div className="about-cols">
+        <Reveal className="about-col" delay={0.08}>
+          <h3>Как работаю</h3>
+          <ol className="about-steps">
+            {STEPS.map(([t, d]) => <li key={t}><b>{t}</b><span>{d}</span></li>)}
+          </ol>
+        </Reveal>
+        <Reveal className="about-col" delay={0.16}>
+          <h3>Что уже делал</h3>
+          <ul className="about-done">
+            {DONE.map((t) => <li key={t}>{t}</li>)}
+          </ul>
+        </Reveal>
+      </div>
+    </section>
   )
 }
 
