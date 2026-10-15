@@ -41,8 +41,13 @@ export function StatusBar({ tint, style }) {
   )
 }
 
+// На сенсорных экранах поверх демо: открывает его на весь экран (DemoSheet)
+export function TryButton({ title, onTry }) {
+  return <button type="button" className="dv-open" onClick={onTry} aria-label={`Попробовать: ${title}`}><span>Попробовать</span></button>
+}
+
 // Одиночное устройство: в первом экране и в мобильной версии витрины.
-export function Device({ kind, src, title, width, label, tint }) {
+export function Device({ kind, src, title, width, label, tint, onTry }) {
   const phone = kind === 'phone'
   const h = deviceHeight(kind, width)
   return (
@@ -53,7 +58,7 @@ export function Device({ kind, src, title, width, label, tint }) {
         <div className="dv-viewport" style={{ top: phone ? STATUS : 0 }}>
           <Screen kind={kind} src={src} title={title} width={width} />
         </div>
-        <a className="dv-open" href={src} target="_blank" rel="noreferrer" aria-label={`Открыть демо: ${title}`}><span>Открыть демо</span></a>
+        <TryButton title={title} onTry={onTry} />
       </div>
     </div>
   )

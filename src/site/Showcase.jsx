@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useAnimate, useInView, useMotionValue, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/csr/ArrowUpRight'
 import { WORK } from './data'
-import { Device, Screen, StatusBar, STATUS, deviceHeight } from './Device'
+import { Device, Screen, StatusBar, TryButton, STATUS, deviceHeight } from './Device'
+import DemoSheet from './DemoSheet'
 import Odometer from './Odometer'
 
 function useMedia(q) {
@@ -24,6 +25,8 @@ export default function Showcase() {
   const W = { browser: roomy ? 620 : 520, phone: 280 }
   const [active, setActive] = useState(0)
   const [seen, setSeen] = useState(() => new Set([0]))
+  const [sheet, setSheet] = useState(null)
+  const closeSheet = useCallback(() => setSheet(null), [])
   const list = useRef(null)
   const { scrollYProgress } = useScroll({ target: list, offset: ['start center', 'end center'] })
 
@@ -49,18 +52,19 @@ export default function Showcase() {
       <div className="work-grid">
         <div className="work-list" ref={list}>
           {WORK.map((w, i) => (
-            <Block key={w.id} w={w} n={i + 1} active={wide && i === active} onActive={() => activate(i)} wide={wide} />
+            <Block key={w.id} w={w} n={i + 1} active={wide && i === active} onActive={() => activate(i)} wide={wide} onTry={() => setSheet(w)} />
           ))}
         </div>
-        {wide && <Stage active={active} seen={seen} W={W} progress={scrollYProgress} />}
+        {wide && <Stage active={active} seen={seen} W={W} progress={scrollYProgress} onTry={setSheet} />}
       </div>
+      <DemoSheet demo={sheet} onClose={closeSheet} />
     </section>
   )
 }
 
 const pad2 = (n) => String(n).padStart(2, '0')
 
-function Block({ w, n, active, onActive, wide }) {
+function Block({ w, n, active, onActive, wide, onTry }) {
   const ref = useRef(null)
   const inView = useInView(ref, { margin: '-45% 0px -45% 0px' })
   useEffect(() => { if (inView) onActive() }, [inView])
@@ -79,7 +83,7 @@ function Block({ w, n, active, onActive, wide }) {
       {w.guest && <a className="wb-guest" href={w.guest.src} target="_blank" rel="noreferrer">{w.guest.label} <ArrowUpRight size={14} weight="bold" /></a>}
       {!wide && (
         <div className="wb-device">
-          <Device kind="phone" src={w.src} title={`Демо: ${w.label}`} width={280} tint={w.tint} />
+          <Device kind="phone" src={w.src} title={`Демо: ${w.label}`} width={280} tint={w.tint} onTry={onTry} />
           <div className="wb-label">{w.label}</div>
         </div>
       )}
@@ -90,7 +94,7 @@ function Block({ w, n, active, onActive, wide }) {
 // Смена демо — переворот: устройство поворачивается ребром к зрителю, на ребре подменяется пример
 // и рамка (браузер или телефон), и устройство доворачивается уже с новым. Пока листаешь внутри одной
 // услуги, устройство слегка покачивается вслед за прокруткой и встаёт ровно к моменту переворота.
-function Stage({ active, seen, W, progress }) {
+function Stage({ active, seen, W, progress, onTry }) {
   const reduce = useReducedMotion()
   const [loaded, setLoaded] = useState(() => new Set())
   const [shown, setShown] = useState(active)
@@ -154,7 +158,7 @@ function Stage({ active, seen, W, progress }) {
                     {!loaded.has(x.id) && <div className="st-loading">Загружаю пример…</div>}
                   </div>
                 ))}
-                <a className="dv-open" href={w.src} target="_blank" rel="noreferrer" aria-label={`Открыть демо: ${w.label}`}><span>Открыть демо</span></a>
+                <TryButton title={w.label} onTry={() => onTry(w)} />
               </div>
             </div>
             <motion.div className="st-shade" style={{ opacity: shade }} aria-hidden="true" />

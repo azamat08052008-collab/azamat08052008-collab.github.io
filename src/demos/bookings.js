@@ -4,6 +4,7 @@ import artur from '../assets/img/britva/artur.webp'
 import ildar from '../assets/img/britva/ildar.webp'
 
 export const KEY = 'britva-bookings'
+export const SVC_KEY = 'britva-services'
 
 export const SERVICES = [
   { id: 'cut', name: 'Стрижка', price: 1200, min: 60 },
@@ -22,7 +23,18 @@ export function avaStyle(name) {
   const [x, y] = MASTERS.find((m) => m.name === name).face
   return { transformOrigin: `${x}% ${y}%`, transform: `translate(${50 - x}%, ${37.5 - y}%) scale(2.6)` }
 }
-export const minutesOf = (service) => SERVICES.find((s) => s.name === service)?.min ?? 60
+// Цены и длительность правятся в админке и сохраняются рядом с записями: бот сразу берёт новые
+export function readServices() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SVC_KEY) || 'null')
+    if (Array.isArray(saved)) return SERVICES.map((s) => ({ ...s, ...saved.find((x) => x.id === s.id) }))
+  } catch { /* повреждённые данные — берём справочник */ }
+  return SERVICES
+}
+export function saveServices(list) {
+  try { localStorage.setItem(SVC_KEY, JSON.stringify(list.map(({ id, price, min, hidden }) => ({ id, price, min, hidden })))) } catch { /* приватный режим */ }
+}
+export const minutesOf = (service) => readServices().find((s) => s.name === service)?.min ?? 60
 
 export function dayIso(offset) {
   const d = new Date()

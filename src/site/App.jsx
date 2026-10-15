@@ -3,6 +3,9 @@ import { motion, AnimatePresence, useMotionValue, useReducedMotion, useSpring, u
 import { TelegramLogo } from '@phosphor-icons/react/dist/csr/TelegramLogo'
 import { WhatsappLogo } from '@phosphor-icons/react/dist/csr/WhatsappLogo'
 import { EnvelopeSimple } from '@phosphor-icons/react/dist/csr/EnvelopeSimple'
+import { GraduationCap } from '@phosphor-icons/react/dist/csr/GraduationCap'
+import { SealCheck } from '@phosphor-icons/react/dist/csr/SealCheck'
+import { ArrowUpRight } from '@phosphor-icons/react/dist/csr/ArrowUpRight'
 import Hero from './Hero'
 import Showcase from './Showcase'
 import Odometer from './Odometer'
@@ -75,12 +78,25 @@ const DONE = [
   'Сайт мебельной фабрики',
 ]
 
+// Сертификаты: карточка ведёт на официальную страницу проверки, подлинность видна там
+const CERTS = [
+  { org: 'Anthropic', title: 'Claude Code in Action', text: 'Разработка вместе с ИИ-агентом Claude Code', url: 'https://verify.skilljar.com/c/cv7bw4hczeg2', tone: 'sage' },
+  { org: 'Google · Coursera', title: 'AI for App Building', text: 'Создание приложений с помощью ИИ', date: 'август 2026', url: 'https://www.coursera.org/account/accomplishments/verify/DSEXFSUL66AX', tone: 'paper' },
+]
+
 function About() {
   return (
     <section className="about" id="about">
       <Reveal className="about-lead">
         <h2 className="h2">Делаю сам, от макета до запуска</h2>
         <p className="lead">Вы общаетесь напрямую с тем, кто пишет код: без менеджеров и испорченного телефона. Сайты, боты, интеграции с 1С и CRM, маркетплейсы.</p>
+        <div className="about-edu">
+          <span className="about-edu-ico"><GraduationCap size={26} /></span>
+          <div>
+            <b>Студент МЦК-КТИТС</b>
+            <span>Казанский техникум информационных технологий и связи. Учусь на программиста-разработчика.</span>
+          </div>
+        </div>
       </Reveal>
       <div className="about-cols">
         <Reveal className="about-col" delay={0.08}>
@@ -95,6 +111,25 @@ function About() {
             {DONE.map((t) => <li key={t}>{t}</li>)}
           </ul>
         </Reveal>
+      </div>
+      <div className="about-certs">
+        <Reveal><h3 className="about-certs-title">Сертификаты</h3></Reveal>
+        <div className="certs">
+          {CERTS.map((c, i) => (
+            <Reveal key={c.url} delay={i * 0.08}>
+              <a className={`cert cert-${c.tone}`} href={c.url} target="_blank" rel="noreferrer">
+                <span className="cert-badge"><SealCheck size={16} weight="fill" /> Сертификат</span>
+                <span className="cert-org">{c.org}</span>
+                <b className="cert-title">{c.title}</b>
+                <span className="cert-text">{c.text}{c.date ? `, ${c.date}` : ''}</span>
+                <span className="cert-foot">
+                  <span>Azamat Nazmutdinov</span>
+                  <span className="cert-check">Проверить <ArrowUpRight size={14} weight="bold" /></span>
+                </span>
+              </a>
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   )

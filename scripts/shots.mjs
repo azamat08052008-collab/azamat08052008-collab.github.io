@@ -25,7 +25,7 @@ const click = async (p, names) => { for (const n of names) { await p.getByRole('
 await shot('landing', base + '/demo/landing/', browser)
 await shot('shop', base + '/demo/shop/', browser)
 await shot('admin', base + '/demo/admin/', browser)
-await shot('bot', base + '/demo/bot/', phone, (p) => click(p, ['Записаться', 'Стрижка · 1 200 ₽']))
+await shot('bot', base + '/demo/bot/', phone, (p) => click(p, ['Начать', 'Записаться', 'Стрижка · 1 200 ₽']))
 await shot('ai', base + '/demo/ai/', phone, async (p) => { await click(p, ['Есть занятия для новичков?']); await p.waitForTimeout(2500) })
 await shot('qr', podacha + 'kofe/?t=4', phone)
 await b.close()
