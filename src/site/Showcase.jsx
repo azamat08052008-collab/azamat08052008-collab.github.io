@@ -1,47 +1,24 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence, useAnimate, useInView, useMotionValue, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { useCallback, useRef, useState } from 'react'
+import { motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/csr/ArrowUpRight'
 import { WORK } from './data'
-import { Device, Screen, StatusBar, TryButton, STATUS, deviceHeight } from './Device'
+import { Device } from './Device'
 import DemoSheet from './DemoSheet'
 import Odometer from './Odometer'
+import { useMedia, useViewport, morph } from './hooks'
 
-function useMedia(q) {
-  const [on, setOn] = useState(() => matchMedia(q).matches)
-  useEffect(() => {
-    const m = matchMedia(q)
-    const sync = () => setOn(m.matches)
-    m.addEventListener('change', sync)
-    return () => m.removeEventListener('change', sync)
-  }, [q])
-  return on
-}
+const N = WORK.length
+const PANEL = 88 // ширина панели ленты, vw
 
-// Витрина: на компьютере слева услуги, справа закреплённое устройство, в котором сменяются демо.
-// Открытые демо остаются загруженными, чтобы при возврате не терялись переписка в боте и корзина.
+// Витрина — лента: на компьютере экран закреплён, прокрутка вниз везёт шесть примеров справа налево.
+// Устройство подъезжает повёрнутым и встаёт ровно в центре. Сверху оглавление: где вы и куда перейти.
+// На телефоне — список, где каждый пример собирается при прокрутке: телефон разворачивается к вам,
+// заголовок набирает раструбы, как на первом экране. Демо открывается на весь экран кнопкой «Попробовать».
 export default function Showcase() {
   const wide = useMedia('(min-width: 1000px)')
-  const roomy = useMedia('(min-width: 1180px)')
-  const W = { browser: roomy ? 620 : 520, phone: 280 }
-  const [active, setActive] = useState(0)
-  const [seen, setSeen] = useState(() => new Set([0]))
+  const reduce = useReducedMotion()
   const [sheet, setSheet] = useState(null)
   const closeSheet = useCallback(() => setSheet(null), [])
-  const list = useRef(null)
-  const { scrollYProgress } = useScroll({ target: list, offset: ['start center', 'end center'] })
-
-  function activate(i) {
-    setActive(i)
-    setSeen((s) => (s.has(i) ? s : new Set(s).add(i)))
-  }
-
-  // На компьютере начинаем грузить все демо через секунду после открытия: внешние (лендинг «Подачи»)
-  // грузятся по 3–4 секунды, и к тому моменту, когда до них долистают, они уже готовы
-  useEffect(() => {
-    if (!wide) return
-    const t = setTimeout(() => setSeen(new Set(WORK.map((_, i) => i))), 1000)
-    return () => clearTimeout(t)
-  }, [wide])
 
   return (
     <section className="work" id="work">
@@ -49,141 +26,105 @@ export default function Showcase() {
         <h2 className="h2">Живые примеры, а не картинки</h2>
         <p className="lead">Нажимайте кнопки, оформляйте заказы, записывайтесь. Всё работает так же, как будет у вас.</p>
       </div>
-      <div className="work-grid">
-        <div className="work-list" ref={list}>
-          {WORK.map((w, i) => (
-            <Block key={w.id} w={w} n={i + 1} active={wide && i === active} onActive={() => activate(i)} wide={wide} onTry={() => setSheet(w)} />
-          ))}
-        </div>
-        {wide && <Stage active={active} seen={seen} W={W} progress={scrollYProgress} onTry={setSheet} />}
-      </div>
+      {wide && !reduce
+        ? <Track onTry={setSheet} />
+        : <div className="work-list">{WORK.map((w) => <Panel key={w.id} w={w} wide={wide} onTry={() => setSheet(w)} />)}</div>}
       <DemoSheet demo={sheet} onClose={closeSheet} />
     </section>
   )
 }
 
-const pad2 = (n) => String(n).padStart(2, '0')
+function Track({ onTry }) {
+  const wrap = useRef(null)
+  const { scrollYProgress } = useScroll({ target: wrap, offset: ['start start', 'end end'] })
+  // Позиция в ленте с остановками: каждый пример стоит по центру часть прокрутки, потом лента едет дальше
+  const pos = useTransform(scrollYProgress, (v) => dwell(v * (N - 1)))
+  const x = useTransform(pos, (v) => `${-v * PANEL}vw`)
+  const [active, setActive] = useState(0)
+  useMotionValueEvent(pos, 'change', (v) => setActive(Math.round(v)))
 
-function Block({ w, n, active, onActive, wide, onTry }) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { margin: '-45% 0px -45% 0px' })
-  useEffect(() => { if (inView) onActive() }, [inView])
+  function go(i) {
+    const el = wrap.current
+    const top = el.getBoundingClientRect().top + scrollY
+    scrollTo({ top: top + ((el.offsetHeight - innerHeight) * i) / (N - 1), behavior: 'smooth' })
+  }
 
   return (
-    <article ref={ref} id={`w-${w.id}`} className={`wb ${active ? 'is-on' : ''}`}>
-      <div className="wb-num" aria-hidden="true">{pad2(n)}</div>
-      <h3>{w.title}</h3>
-      <p className="wb-pitch">{w.pitch}</p>
-      <ul>{w.items.map((t) => <li key={t}>{t}</li>)}</ul>
-      <div className="wb-price">
-        <Odometer className="mono" value={w.price} />
-        <span className="wb-term">{w.term}</span>
-      </div>
-      {w.note && <p className="wb-note">{w.note}</p>}
-      {w.guest && <a className="wb-guest" href={w.guest.src} target="_blank" rel="noreferrer">{w.guest.label} <ArrowUpRight size={14} weight="bold" /></a>}
-      {!wide && (
-        <div className="wb-device">
-          <Device kind="phone" src={w.src} title={`Демо: ${w.label}`} width={280} tint={w.tint} dark={w.statusDark} onTry={onTry} />
-          <div className="wb-label">{w.label}</div>
+    <div className="track-wrap" ref={wrap} style={{ height: `${N * 85}vh` }}>
+      <div className="track-pin">
+        <div className="track-index">
+          {WORK.map((w, i) => (
+            <button key={w.id} type="button" className={i === active ? 'is-on' : ''} aria-current={i === active ? 'true' : undefined} onClick={() => go(i)}>
+              {w.title}
+            </button>
+          ))}
+          <span className="track-rail" aria-hidden="true"><motion.i style={{ scaleX: scrollYProgress }} /></span>
         </div>
-      )}
+        <motion.div className="track" style={{ x }}>
+          {WORK.map((w, i) => <Panel key={w.id} w={w} i={i} pos={pos} wide onTry={() => onTry(w)} />)}
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+function Panel({ w, i, pos, wide, onTry }) {
+  const { w: vw, h: vh } = useViewport()
+  const ref = useRef(null)
+  const reduce = useReducedMotion()
+  const moving = Boolean(pos)
+  const entering = !moving && !reduce
+  const still = useMotionValue(0)
+  // Положение панели относительно центра: -1 — уехала влево, 0 — по центру, 1 — ещё справа
+  const local = useTransform(pos || still, (v) => Math.max(-1, Math.min(1, i - v)))
+  const turn = useTransform(local, [-1, 0, 1], [16, 0, -22])
+  const shift = useTransform(local, [-1, 0, 1], [-60, 0, 140])
+  const fade = useTransform(local, [-1, 0, 1], [0.15, 1, 0.25])
+
+  // Вход в списке: 0 — карточка только показалась снизу, 1 — дошла до трети экрана
+  const { scrollYProgress: enter } = useScroll({ target: ref, offset: ['start end', 'start 30%'] })
+  const inTurn = useTransform(enter, [0, 1], [-34, 0])
+  const inTilt = useTransform(enter, [0, 1], [18, 0])
+  const inY = useTransform(enter, [0, 1], [90, 0])
+  const inScale = useTransform(enter, [0, 1], [0.84, 1])
+  const inText = useTransform(enter, [0, 0.7], [36, 0])
+  const inFade = useTransform(enter, [0, 0.6], [0, 1])
+  const inFont = useTransform(enter, [0.25, 1], [0, 1], { clamp: true })
+  const inAxes = useTransform(inFont, morph)
+
+  // Размер устройства под окно: телефон по высоте, браузер по ширине колонки
+  const room = vh - 68 - 64 - 64
+  const kind = wide ? w.kind : 'phone'
+  const width = !wide ? 280
+    : kind === 'phone' ? clamp(Math.round((room - 50) / 2.164), 180, 290)
+    : clamp(Math.round(Math.min(vw * PANEL / 100 * 0.56, (room - 38) / 0.625)), 420, 640)
+
+  return (
+    <article ref={ref} id={`w-${w.id}`} className={`wb wb-${kind} ${moving ? 'is-track' : ''}`}>
+      <motion.div className="wb-text" style={moving ? { x: shift, opacity: fade } : entering ? { y: inText, opacity: inFade } : undefined}>
+        <motion.h3 style={entering ? { fontVariationSettings: inAxes } : undefined}>{w.title}</motion.h3>
+        <p className="wb-pitch">{w.pitch}</p>
+        <ul>{w.items.map((t) => <li key={t}>{t}</li>)}</ul>
+        <div className="wb-price">
+          <Odometer value={w.price} />
+          <span className="wb-term">{w.term}</span>
+        </div>
+        {w.note && <p className="wb-note">{w.note}</p>}
+        {w.guest && <a className="wb-guest" href={w.guest.src} target="_blank" rel="noreferrer">{w.guest.label} <ArrowUpRight size={14} weight="bold" /></a>}
+      </motion.div>
+      <div className="wb-device">
+        <motion.div className="wb-turn" style={moving ? { rotateY: turn } : entering ? { rotateY: inTurn, rotateX: inTilt, y: inY, scale: inScale } : undefined}>
+          <Device kind={kind} src={w.src} title={`Демо: ${w.label}`} label={w.label} width={width} tint={w.tint} dark={w.statusDark} onTry={onTry} />
+        </motion.div>
+        <a className="wb-label" href={w.src} target="_blank" rel="noreferrer">{w.label} <ArrowUpRight size={13} weight="bold" /></a>
+      </div>
     </article>
   )
 }
 
-// Смена демо — переворот: устройство поворачивается ребром к зрителю, на ребре подменяется пример
-// и рамка (браузер или телефон), и устройство доворачивается уже с новым. Пока листаешь внутри одной
-// услуги, устройство слегка покачивается вслед за прокруткой и встаёт ровно к моменту переворота.
-function Stage({ active, seen, W, progress, onTry }) {
-  const reduce = useReducedMotion()
-  const [loaded, setLoaded] = useState(() => new Set())
-  const [shown, setShown] = useState(active)
-  const [, animate] = useAnimate()
-  const prev = useRef(active)
-  const turn = useMotionValue(0)
-  const shade = useTransform(turn, (v) => Math.min(Math.abs(v) / 90, 1) * 0.45)
-  const sway = useTransform(progress, (p) => Math.sin(p * WORK.length * Math.PI * 2) * 7)
-  const lift = useTransform(progress, (p) => Math.cos(p * WORK.length * Math.PI * 2) * -8)
-
-  useEffect(() => {
-    if (active === prev.current) return
-    const dir = active > prev.current ? 1 : -1
-    prev.current = active
-    if (reduce) { setShown(active); return }
-    let cancelled = false
-    ;(async () => {
-      await animate(turn, dir * 90, { duration: 0.22, ease: [0.55, 0, 0.85, 0.35] })
-      if (cancelled) return
-      setShown(active)
-      turn.set(-dir * 90)
-      await animate(turn, 0, { type: 'spring', stiffness: 110, damping: 15 })
-    })()
-    return () => { cancelled = true }
-  }, [active])
-
-  const w = WORK[shown]
-  const kind = w.kind
-  const width = W[kind]
-  const height = deviceHeight(kind, width)
-  const pad = kind === 'phone' ? 10 : 0
-  const bar = kind === 'browser' ? 38 : 0
-  const status = kind === 'phone' ? STATUS : 0
-
-  return (
-    <div className="stage">
-      <div className="stage-inner">
-        <motion.div className="st-tilt" style={reduce ? undefined : { rotateY: sway, y: lift }}>
-          <motion.div
-            className={`st-dev st-${kind}`}
-            style={{
-              rotateY: turn,
-              width: width + pad * 2,
-              height: height + pad * 2 + bar + status,
-              borderRadius: kind === 'phone' ? 46 : 14,
-              padding: pad,
-            }}
-          >
-            {bar > 0 && <div className="st-bar"><i /><i /><i /><span>{w.label}</span></div>}
-            <div className="st-screen" style={{ borderRadius: kind === 'phone' ? 36 : 0 }}>
-              {status > 0 && <div className="st-status" style={{ background: w.tint }}><StatusBar tint="transparent" dark={w.statusDark} style={{ height: STATUS }} /></div>}
-              <div className="st-layers">
-                {WORK.map((x, i) => seen.has(i) && (
-                  <div
-                    key={x.id}
-                    className="st-layer"
-                    style={{ opacity: i === shown ? 1 : 0, pointerEvents: i === shown ? 'auto' : 'none', zIndex: i === shown ? 1 : 0 }}
-                  >
-                    <Screen kind={x.kind} src={x.src} title={`Демо: ${x.label}`} width={W[x.kind]} active={i === shown} scroll={x.scroll !== false}
-                      onLoad={() => setLoaded((l) => new Set(l).add(x.id))} />
-                    {!loaded.has(x.id) && <div className="st-loading">Загружаю пример…</div>}
-                  </div>
-                ))}
-                <TryButton title={w.label} onTry={() => onTry(w)} />
-              </div>
-            </div>
-            <motion.div className="st-shade" style={{ opacity: shade }} aria-hidden="true" />
-          </motion.div>
-        </motion.div>
-        {/* Номер примера и полоса: сколько пройдено и сколько впереди */}
-        <div className="st-foot">
-          <span className="st-count"><Odometer value={pad2(shown + 1)} /><span>/ {pad2(WORK.length)}</span></span>
-          <span className="st-track" aria-hidden="true"><motion.i style={{ scaleX: progress }} /></span>
-          <AnimatePresence mode="wait">
-            <motion.a
-              key={w.id}
-              className="st-label"
-              href={w.src}
-              target="_blank"
-              rel="noreferrer"
-              initial={reduce ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduce ? undefined : { opacity: 0, y: -8, transition: { duration: 0.12 } }}
-            >
-              {w.label} <ArrowUpRight size={14} weight="bold" />
-            </motion.a>
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
-  )
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
+function dwell(p) {
+  const k = Math.floor(p)
+  const g = clamp((p - k - 0.2) / 0.6, 0, 1)
+  return k + (g < 0.5 ? 2 * g * g : 1 - (2 - 2 * g) ** 2 / 2)
 }

@@ -1,122 +1,128 @@
-import { useEffect, useRef } from 'react'
-import { motion, animate, useMotionValue, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
+import { useEffect, useRef, useState } from 'react'
+import { motion, animate, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { TelegramLogo } from '@phosphor-icons/react/dist/csr/TelegramLogo'
 import { WhatsappLogo } from '@phosphor-icons/react/dist/csr/WhatsappLogo'
 import { ArrowDown } from '@phosphor-icons/react/dist/csr/ArrowDown'
-import { WORK, TG, WA } from './data'
+import { TG, WA } from './data'
+import { useMedia, morph } from './hooks'
 import landing from '../assets/img/shots/landing.jpg'
-import shop from '../assets/img/shots/shop.jpg'
-import admin from '../assets/img/shots/admin.jpg'
 import bot from '../assets/img/shots/bot.jpg'
-import ai from '../assets/img/shots/ai.jpg'
-import qr from '../assets/img/shots/qr.jpg'
 
-// Первый экран: снимки всех демо стоят дугой на внутренней стороне цилиндра и смотрят на зрителя.
-// Веер покачивается сам и поворачивается за курсором; при прокрутке наклоняется и растворяется.
-// Снимки обновляет scripts/shots.mjs, живые демо — в витрине ниже.
-const SHOT = { landing, shop, admin, bot, ai, qr }
-const ORDER = ['qr', 'landing', 'bot', 'shop', 'ai', 'admin']
-const SIZE = { browser: [340, 212], phone: [168, 364] }
-// QR-меню в витрине показано лендингом «Подачи», а в веере — меню глазами гостя на телефоне
-const FAN_KIND = { qr: 'phone' }
-const R = 1000 // радиус цилиндра, px
-const GAP = 44
-
-const cards = (() => {
-  const items = ORDER.map((id) => WORK.find((w) => w.id === id))
-  const total = items.reduce((s, w) => s + SIZE[FAN_KIND[w.id] || w.kind][0], 0) + GAP * (items.length - 1)
-  let x = -total / 2
-  return items.map((w, i) => {
-    const kind = FAN_KIND[w.id] || w.kind
-    const [cw, ch] = SIZE[kind]
-    const center = x + cw / 2
-    x += cw + GAP
-    return { ...w, kind, i, cw, ch, angle: (center / R) * (180 / Math.PI) }
-  })
-})()
-
-const ease = [0.16, 1, 0.3, 1]
-const fadeUp = { hide: { opacity: 0, y: 26 }, show: { opacity: 1, y: 0, transition: { duration: 0.8, ease } } }
+// Первый экран — «от макета до запуска» буквально. Слева заголовок, справа сайт собирается на глазах:
+// каркас из линий → сканер проявляет готовую страницу → рядом встаёт телефон с ботом и приходит заявка.
+// На компьютере сборку ведёт прокрутка (экран закреплён), на телефоне она проигрывается сама.
+// Заголовок собирается вместе с сайтом: у Commissioner растут оси «раструб» и «объём».
+const STEPS = [
+  ['Макет', 0],
+  ['Вёрстка', 0.18],
+  ['Запуск', 0.62],
+]
 
 export default function Hero() {
   const ref = useRef(null)
   const reduce = useReducedMotion()
+  const pinned = useMedia('(min-width: 900px)') && !reduce
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
 
-  // Курсор: поворот и наклон веера с пружиной
-  const px = useMotionValue(0)
-  const py = useMotionValue(0)
-  const turn = useSpring(useTransform(px, [-1, 1], [14, -14]), { stiffness: 70, damping: 18 })
-  const tilt = useSpring(useTransform(py, [-1, 1], [-5, 5]), { stiffness: 70, damping: 18 })
-
-  // Без курсора веер медленно покачивается
-  const sway = useMotionValue(0)
+  // Одна шкала сборки 0→1: на компьютере от прокрутки, на телефоне по времени
+  const p = useMotionValue(reduce ? 1 : 0)
+  useMotionValueEvent(scrollYProgress, 'change', (v) => { if (pinned) p.set(v) })
   useEffect(() => {
-    if (reduce) return
-    const c = animate(sway, [-5, 5], { duration: 9, ease: 'easeInOut', repeat: Infinity, repeatType: 'mirror' })
+    if (reduce) { p.set(1); return }
+    if (pinned) { p.set(scrollYProgress.get()); return }
+    p.set(0)
+    const c = animate(p, 1, { duration: 4.2, delay: 0.9, ease: [0.45, 0, 0.25, 1] })
     return () => c.stop()
-  }, [reduce, sway])
+  }, [pinned, reduce])
 
-  // Прокрутка: веер наклоняется, приближается, уходит вверх и растворяется
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const scrollTilt = useTransform(scrollYProgress, [0, 1], [0, 28])
-  const rotateY = useTransform([sway, turn], ([a, b]) => a + b)
-  const rotateX = useTransform([tilt, scrollTilt], ([a, b]) => a + b)
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.25])
-  const y = useTransform(scrollYProgress, [0, 1], [0, -140])
-  const opacity = useTransform(scrollYProgress, [0, 0.75], [1, 0])
-  const spread = useTransform(scrollYProgress, [0, 1], [0, 1])
+  const [step, setStep] = useState(reduce ? 2 : 0)
+  useMotionValueEvent(p, 'change', (v) => setStep(STEPS.reduce((s, [, at], i) => (v >= at ? i : s), 0)))
 
-  function onMove(e) {
-    if (reduce || e.pointerType !== 'mouse') return
-    px.set((e.clientX / innerWidth) * 2 - 1)
-    py.set((e.clientY / innerHeight) * 2 - 1)
-  }
+  const font = useTransform(p, [0, 0.7], [0, 1])
+  const fvs = useTransform(font, morph)
+  const reveal = useTransform(p, [0.14, 0.52], [100, 0])
+  const clip = useTransform(reveal, (v) => `inset(0 ${v}% 0 0)`)
+  const scanX = useTransform(reveal, (v) => `${100 - v}%`)
+  const scanOn = useTransform(p, [0.12, 0.16, 0.5, 0.54], [0, 1, 1, 0])
+  const tiltX = useTransform(p, [0, 0.5], [24, 0])
+  const tiltY = useTransform(p, [0, 0.5, 1], [-10, 0, -6])
+  const lift = useTransform(p, [0, 0.5], [0.9, 1])
+  const phoneY = useTransform(p, [0.54, 0.74], ['115%', '0%'])
+  const phoneR = useTransform(p, [0.54, 0.74], [10, -4])
+  const phoneO = useTransform(p, [0.52, 0.6], [0, 1])
+  const toastO = useTransform(p, [0.8, 0.86], [0, 1])
+  const toastY = useTransform(p, [0.8, 0.88], [16, 0])
+  const fill = useTransform(p, [0, 0.92], [0, 1])
 
   return (
-    <section className="hero" ref={ref} onPointerMove={onMove} onPointerLeave={() => { px.set(0); py.set(0) }}>
-      <motion.div className="fan-scene" style={reduce ? undefined : { y, scale, opacity }}>
-        <div className="fan-fit">
-          <motion.div className="fan" style={reduce ? { z: -R } : { z: -R, rotateY, rotateX }}>
-            {cards.map((c) => <Card key={c.id} c={c} spread={spread} reduce={reduce} />)}
+    <section className={`hero ${pinned ? 'is-pinned' : ''}`} ref={ref}>
+      <div className="hero-pin">
+        <motion.div className="hero-copy" initial={reduce ? false : 'hide'} animate="show" variants={{ show: { transition: { staggerChildren: 0.09, delayChildren: 0.15 } } }}>
+          <motion.p variants={rise} className="hero-who">Привет, я Азамат, разработчик</motion.p>
+          <motion.h1 variants={rise} style={{ fontVariationSettings: fvs }}>Сайты, боты и&nbsp;приложения</motion.h1>
+          <motion.p variants={rise} className="hero-sub">Под ключ для малого бизнеса, от макета до запуска. Листайте ниже: всё работает по-настоящему.</motion.p>
+          <motion.div variants={rise} className="hero-cta">
+            <a className="btn btn-primary" href="#work">Смотреть примеры <ArrowDown size={18} weight="bold" /></a>
+            <span className="hero-msg">
+              <a className="btn btn-ghost" href={TG} target="_blank" rel="noreferrer"><TelegramLogo size={20} weight="fill" /> Telegram</a>
+              <a className="btn btn-ghost" href={WA} target="_blank" rel="noreferrer"><WhatsappLogo size={20} weight="fill" className="wa-ico" /> WhatsApp</a>
+            </span>
+          </motion.div>
+          <motion.ol variants={rise} className="hero-steps" aria-label="Этапы работы">
+            {STEPS.map(([t], i) => <li key={t} className={i <= step ? 'is-done' : ''} aria-current={i === step ? 'step' : undefined}>{t}</li>)}
+            <motion.i className="hero-steps-fill" style={{ scaleX: fill }} aria-hidden="true" />
+          </motion.ol>
+        </motion.div>
+
+        <div className="build" aria-hidden="true">
+          <motion.div className="build-board" style={{ rotateX: tiltX, rotateY: tiltY, scale: lift }}>
+            <div className="build-bar"><i /><i /><i /><span>Детейлинг-студия «Глянец»</span></div>
+            <div className="build-page">
+              <Wireframe />
+              <motion.img className="build-shot" src={landing} alt="" style={{ clipPath: clip }} draggable="false" />
+              <motion.span className="build-scan" style={{ left: scanX, opacity: scanOn }} />
+              <span className="build-note n-h1">Заголовок</span>
+              <span className="build-note n-img">Фото</span>
+              <span className="build-note n-btn">Кнопка заявки</span>
+            </div>
+          </motion.div>
+          <motion.div className="build-phone" style={{ y: phoneY, rotate: phoneR, opacity: phoneO }}>
+            <img src={bot} alt="" draggable="false" />
+          </motion.div>
+          <motion.div className="build-toast" style={{ opacity: toastO, y: toastY }}>
+            <TelegramLogo size={18} weight="fill" />
+            <span><b>Новая заявка</b>с сайта, 13:20</span>
           </motion.div>
         </div>
-      </motion.div>
-
-      <motion.div className="hero-copy" initial={reduce ? false : 'hide'} animate="show" variants={{ show: { transition: { staggerChildren: 0.08, delayChildren: 0.45 } } }}>
-        <motion.p variants={fadeUp} className="hero-who">Привет, я Азамат, разработчик</motion.p>
-        <motion.h1 variants={fadeUp}>Сайты, боты и&nbsp;приложения</motion.h1>
-        <motion.p variants={fadeUp} className="hero-sub">Под ключ для малого бизнеса, от макета до запуска. Нажмите на пример или листайте ниже: всё работает по-настоящему.</motion.p>
-        <motion.div variants={fadeUp} className="hero-cta">
-          <a className="btn btn-primary" href="#work">Смотреть примеры <ArrowDown size={18} weight="bold" /></a>
-          <span className="hero-msg">
-            <a className="btn btn-ghost" href={TG} target="_blank" rel="noreferrer"><TelegramLogo size={20} weight="fill" /> Telegram</a>
-            <a className="btn btn-ghost" href={WA} target="_blank" rel="noreferrer"><WhatsappLogo size={20} weight="fill" className="wa-ico" /> WhatsApp</a>
-          </span>
-        </motion.div>
-      </motion.div>
+      </div>
     </section>
   )
 }
 
-function Card({ c, spread, reduce }) {
-  // При прокрутке соседние карточки расходятся вверх и вниз
-  const dy = useTransform(spread, [0, 1], [0, (c.i % 2 ? -1 : 1) * 90])
+const rise = { hide: { opacity: 0, y: 22 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } } }
+
+// Каркас страницы «Глянца» в координатах снимка 1280×800: линии чертятся при загрузке
+function Wireframe() {
   return (
-    <div className="fan-slot" style={{ width: c.cw, height: c.ch, marginLeft: -c.cw / 2, marginTop: -c.ch / 2, transform: `rotateY(${c.angle}deg) translateZ(${R}px)` }}>
-      <motion.div className="fan-lift" style={reduce ? undefined : { y: dy }}>
-      <motion.a
-        href={`#w-${c.id}`}
-        className={`fan-card fan-${c.kind}`}
-        aria-label={`${c.title}: ${c.label}, ${c.price}`}
-        initial={reduce ? false : { opacity: 0, y: 160, rotateX: 35 }}
-        animate={{ opacity: 1, y: 0, rotateX: 0 }}
-        transition={{ type: 'spring', stiffness: 90, damping: 16, delay: 0.1 + c.i * 0.07 }}
-        whileHover={reduce ? undefined : { z: 70, scale: 1.04, transition: { type: 'spring', stiffness: 300, damping: 22 } }}
-      >
-        <img src={SHOT[c.id]} alt="" draggable="false" />
-        <span className="fan-tag"><b>{c.title}</b>{c.price}</span>
-      </motion.a>
-      </motion.div>
-    </div>
+    <svg className="wire" viewBox="0 0 1280 800" preserveAspectRatio="none">
+      <line x1="0" y1="68" x2="1280" y2="68" pathLength="1" />
+      <rect x="32" y="20" width="100" height="28" rx="4" pathLength="1" />
+      <rect x="846" y="27" width="46" height="12" rx="6" className="wire-fill" />
+      <rect x="918" y="27" width="72" height="12" rx="6" className="wire-fill" />
+      <rect x="1018" y="27" width="84" height="12" rx="6" className="wire-fill" />
+      <rect x="1134" y="12" width="114" height="44" rx="10" pathLength="1" />
+      <rect x="77" y="146" width="220" height="12" rx="6" className="wire-fill" />
+      <rect x="77" y="184" width="486" height="94" rx="6" pathLength="1" />
+      <rect x="77" y="294" width="412" height="94" rx="6" pathLength="1" />
+      <rect x="77" y="422" width="310" height="14" rx="7" className="wire-fill" />
+      <rect x="77" y="452" width="320" height="14" rx="7" className="wire-fill" />
+      <rect x="77" y="482" width="60" height="14" rx="7" className="wire-fill" />
+      <rect x="77" y="532" width="232" height="54" rx="10" pathLength="1" />
+      <rect x="322" y="532" width="130" height="54" rx="10" pathLength="1" />
+      <rect x="478" y="350" width="700" height="370" rx="8" pathLength="1" />
+      <line x1="478" y1="350" x2="1178" y2="720" pathLength="1" />
+      <line x1="1178" y1="350" x2="478" y2="720" pathLength="1" />
+      <circle cx="1226" cy="746" r="32" pathLength="1" />
+    </svg>
   )
 }

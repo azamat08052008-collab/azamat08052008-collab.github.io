@@ -1,14 +1,16 @@
-import { useState } from 'react'
-import { motion, AnimatePresence, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
+import { useRef, useState } from 'react'
+import { motion, AnimatePresence, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { TelegramLogo } from '@phosphor-icons/react/dist/csr/TelegramLogo'
 import { WhatsappLogo } from '@phosphor-icons/react/dist/csr/WhatsappLogo'
 import { EnvelopeSimple } from '@phosphor-icons/react/dist/csr/EnvelopeSimple'
 import { GraduationCap } from '@phosphor-icons/react/dist/csr/GraduationCap'
 import { SealCheck } from '@phosphor-icons/react/dist/csr/SealCheck'
 import { ArrowUpRight } from '@phosphor-icons/react/dist/csr/ArrowUpRight'
+import { Check } from '@phosphor-icons/react/dist/csr/Check'
 import Hero from './Hero'
 import Showcase from './Showcase'
 import Odometer from './Odometer'
+import { morph } from './hooks'
 import { PRICES, TG, EMAIL, WA, WA_PHONE } from './data'
 
 const ease = [0.16, 1, 0.3, 1]
@@ -16,7 +18,7 @@ const ease = [0.16, 1, 0.3, 1]
 function Reveal({ children, className, delay = 0 }) {
   const reduce = useReducedMotion()
   return (
-    <motion.div className={className} initial={reduce ? false : { opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+    <motion.div className={className} initial={reduce ? false : { opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.25 }} transition={{ duration: 0.7, delay, ease }}>
       {children}
     </motion.div>
@@ -24,6 +26,7 @@ function Reveal({ children, className, delay = 0 }) {
 }
 
 export default function App() {
+  const { scrollYProgress } = useScroll()
   return (
     <>
       <nav className="nav">
@@ -42,6 +45,7 @@ export default function App() {
             <TelegramLogo size={18} weight="fill" /><span className="nav-cta-text">Написать в Telegram</span>
           </a>
         </div>
+        <motion.i className="nav-progress" style={{ scaleX: scrollYProgress }} aria-hidden="true" />
       </nav>
       <main id="top">
         <Hero />
@@ -87,51 +91,78 @@ const CERTS = [
 function About() {
   return (
     <section className="about" id="about">
-      <Reveal className="about-lead">
-        <h2 className="h2">Делаю сам, от макета до запуска</h2>
-        <p className="lead">Вы общаетесь напрямую с тем, кто пишет код: без менеджеров и испорченного телефона. Сайты, боты, интеграции с 1С и CRM, маркетплейсы.</p>
-        <div className="about-edu">
-          <span className="about-edu-ico"><GraduationCap size={26} /></span>
-          <div>
-            <b>Студент МЦК-КТИТС</b>
-            <span>Казанский техникум информационных технологий и связи. Учусь на программиста-разработчика.</span>
-          </div>
-        </div>
-      </Reveal>
-      <div className="about-cols">
-        <Reveal className="about-col" delay={0.08}>
-          <h3>Как работаю</h3>
-          <ol className="about-steps">
-            {STEPS.map(([t, d]) => <li key={t}><b>{t}</b><span>{d}</span></li>)}
-          </ol>
+      <div className="about-top">
+        <Reveal className="about-lead">
+          <h2 className="h2">Делаю сам, от макета до запуска</h2>
+          <p className="lead">Вы общаетесь напрямую с тем, кто пишет код: без менеджеров и испорченного телефона. Сайты, боты, интеграции с 1С и CRM, маркетплейсы.</p>
         </Reveal>
-        <Reveal className="about-col" delay={0.16}>
-          <h3>Что уже делал</h3>
-          <ul className="about-done">
-            {DONE.map((t) => <li key={t}>{t}</li>)}
-          </ul>
+        <Reveal className="about-edu" delay={0.1}>
+          <span className="about-edu-ico"><GraduationCap size={28} /></span>
+          <b>Студент МЦК-КТИТС</b>
+          <span>Казанский техникум информационных технологий и связи. Учусь на программиста-разработчика.</span>
         </Reveal>
       </div>
-      <div className="about-certs">
-        <Reveal><h3 className="about-certs-title">Сертификаты</h3></Reveal>
-        <div className="certs">
-          {CERTS.map((c, i) => (
-            <Reveal key={c.url} delay={i * 0.08}>
-              <a className={`cert cert-${c.tone}`} href={c.url} target="_blank" rel="noreferrer">
-                <span className="cert-badge"><SealCheck size={16} weight="fill" /> Сертификат</span>
-                <span className="cert-org">{c.org}</span>
-                <b className="cert-title">{c.title}</b>
-                <span className="cert-text">{c.text}{c.date ? `, ${c.date}` : ''}</span>
-                <span className="cert-foot">
-                  <span>Azamat Nazmutdinov</span>
-                  <span className="cert-check">Проверить <ArrowUpRight size={14} weight="bold" /></span>
-                </span>
-              </a>
-            </Reveal>
-          ))}
+      <Steps />
+      <div className="about-bottom">
+        <div className="about-done">
+          <Reveal><h3 className="about-h3">Что уже делал</h3></Reveal>
+          <Reveal delay={0.05}>
+            <ul>{DONE.map((t) => <li key={t}><Check size={18} weight="bold" />{t}</li>)}</ul>
+          </Reveal>
+        </div>
+        <div className="about-certs">
+          <Reveal><h3 className="about-h3">Сертификаты</h3></Reveal>
+          <div className="certs">
+            {CERTS.map((c, i) => <Cert key={c.url} c={c} i={i} />)}
+          </div>
         </div>
       </div>
     </section>
+  )
+}
+
+// Как работаю — это последовательность, поэтому шкала: линия дорисовывается прокруткой и зажигает этапы
+function Steps() {
+  const ref = useRef(null)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 85%', 'end 55%'] })
+  const [lit, setLit] = useState(reduce ? STEPS.length : 0)
+  useMotionValueEvent(scrollYProgress, 'change', (v) => { if (!reduce) setLit(Math.floor(v * STEPS.length + 0.15)) })
+  return (
+    <div className="steps" ref={ref}>
+      <h3 className="about-h3">Как работаю</h3>
+      <ol>
+        <motion.i className="steps-line" style={{ scaleX: reduce ? 1 : scrollYProgress }} aria-hidden="true" />
+        {STEPS.map(([t, d], i) => (
+          <li key={t} className={i < lit ? 'is-lit' : ''}>
+            <span className="steps-dot" aria-hidden="true">{i + 1}</span>
+            <b>{t}</b>
+            <span>{d}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+// Сертификат лежит на столе чуть повёрнутым и выравнивается, когда доезжает до середины экрана
+function Cert({ c, i }) {
+  const ref = useRef(null)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'center 60%'] })
+  const rotate = useTransform(scrollYProgress, [0, 1], [i ? 5 : -6, i ? 1.2 : -1.2])
+  const y = useTransform(scrollYProgress, [0, 1], [80, 0])
+  return (
+    <motion.a ref={ref} className={`cert cert-${c.tone}`} href={c.url} target="_blank" rel="noreferrer" style={reduce ? undefined : { rotate, y }}>
+      <span className="cert-badge"><SealCheck size={18} weight="fill" /> Сертификат</span>
+      <span className="cert-org">{c.org}</span>
+      <b className="cert-title">{c.title}</b>
+      <span className="cert-text">{c.text}{c.date ? `, ${c.date}` : ''}</span>
+      <span className="cert-foot">
+        <span className="cert-name">Azamat Nazmutdinov</span>
+        <span className="cert-check">Проверить <ArrowUpRight size={14} weight="bold" /></span>
+      </span>
+    </motion.a>
   )
 }
 
@@ -140,65 +171,46 @@ function Prices() {
   const [tab, setTab] = useState(0)
   return (
     <section className="prices" id="price">
-      <Reveal>
+      <Reveal className="prices-head">
         <h2 className="h2">Цены</h2>
         <p className="lead">Стартовые. Точную цену считаю после короткого разговора о задаче и присылаю смету по этапам.</p>
       </Reveal>
       <div className="pr-tabs" role="tablist">
         {PRICES.map((g, i) => (
           <button key={g.group} role="tab" aria-selected={tab === i} className={tab === i ? 'is-on' : ''} onClick={() => setTab(i)}>
-            {tab === i && <motion.span layoutId="pr-tab" className="pr-tab-bg" transition={{ type: 'spring', stiffness: 520, damping: 42 }} />}
             <span className="pr-tab-label">{g.group}</span>
+            {tab === i && <motion.span layoutId="pr-tab" className="pr-tab-mark" transition={{ type: 'spring', stiffness: 480, damping: 40 }} />}
           </button>
         ))}
       </div>
       <AnimatePresence mode="wait">
-        <motion.div
+        <motion.ul
           key={tab}
-          className="pr-grid"
+          className="pr-list"
           role="tabpanel"
           initial={reduce ? false : 'hide'}
           animate="show"
           exit={reduce ? undefined : { opacity: 0, transition: { duration: 0.12 } }}
-          variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+          variants={{ show: { transition: { staggerChildren: 0.05 } } }}
         >
           {PRICES[tab].rows.map(([name, desc, term, price]) => (
-            <PriceCard key={name} name={name} desc={desc} term={term} price={price} reduce={reduce} />
+            <motion.li key={name} className="pr-row" variants={row}>
+              <h3>{name}</h3>
+              <p>{desc}</p>
+              <span className="pr-term">{term}</span>
+              <Odometer className="pr-price" value={price} />
+            </motion.li>
           ))}
-        </motion.div>
+        </motion.ul>
       </AnimatePresence>
     </section>
   )
 }
 
-// Карточка цены: появляется, откидываясь сверху как табличка на табло, и наклоняется за курсором
-const flap = {
-  hide: { opacity: 0, rotateX: -75 },
-  show: { opacity: 1, rotateX: 0, transition: { type: 'spring', stiffness: 160, damping: 18 } },
-}
-function PriceCard({ name, desc, term, price, reduce }) {
-  const px = useMotionValue(0)
-  const py = useMotionValue(0)
-  const rotateY = useSpring(useTransform(px, [-0.5, 0.5], [-8, 8]), { stiffness: 220, damping: 20 })
-  const rotateX = useSpring(useTransform(py, [-0.5, 0.5], [7, -7]), { stiffness: 220, damping: 20 })
-  function onMove(e) {
-    if (reduce || e.pointerType !== 'mouse') return
-    const r = e.currentTarget.getBoundingClientRect()
-    px.set((e.clientX - r.left) / r.width - 0.5)
-    py.set((e.clientY - r.top) / r.height - 0.5)
-  }
-  return (
-    <motion.div className="pr-flap" variants={flap}>
-      <motion.div className="pr-card" style={reduce ? undefined : { rotateX, rotateY, transformPerspective: 900 }} onPointerMove={onMove} onPointerLeave={() => { px.set(0); py.set(0) }}>
-        <h3>{name}</h3>
-        <p>{desc}</p>
-        <div className="pr-foot">
-          <span className="pr-term">{term}</span>
-          <Odometer className="mono pr-price" value={price} />
-        </div>
-      </motion.div>
-    </motion.div>
-  )
+// Строка прайса выезжает из-под линейки сверху
+const row = {
+  hide: { opacity: 0, y: -18, clipPath: 'inset(0 0 100% 0)' },
+  show: { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)', transition: { duration: 0.5, ease } },
 }
 
 function Terms() {
@@ -207,46 +219,51 @@ function Terms() {
       <Reveal className="terms-main">
         <h2 className="h2">Расчёт по вашей задаче бесплатно</h2>
         <p className="lead">Пишете, что нужно. Задаю вопросы, присылаю смету и срок, обычно в тот же день.</p>
-        <div className="terms-incl">
-          <h3>Входит в стоимость</h3>
-          <ul>
-            <li>Адаптив под телефон и планшет</li>
-            <li>Подключение домена и хостинга</li>
-            <li>Яндекс Метрика</li>
-            <li>Инструкция по управлению</li>
-            <li>Две недели правок после запуска</li>
-          </ul>
-        </div>
       </Reveal>
-      <div className="terms-cards">
-        <Reveal className="tc tc-accent" delay={0.05}>
-          <Odometer className="mono" value="50%" />
+      <div className="terms-cols">
+        <Reveal className="tc" delay={0.05}>
+          <Odometer className="tc-big" value="50%" />
           <h3>Оплата</h3>
           <p>Предоплата половины, остаток после приёмки. Крупные проекты по этапам.</p>
         </Reveal>
         <Reveal className="tc" delay={0.12}>
-          <span className="mono">Срок</span>
+          <span className="tc-big">Срок</span>
           <h3>Фиксирую до старта</h3>
           <p>Считается в рабочих днях с момента, когда получены материалы.</p>
         </Reveal>
         <Reveal className="tc" delay={0.19}>
-          <span className="mono">Ваше</span>
+          <span className="tc-big">Ваше</span>
           <h3>Исходники и доступы</h3>
           <p>Код, доступы к хостингу и админке передаю вам. Вы не привязаны ко мне.</p>
         </Reveal>
       </div>
+      <Reveal className="terms-incl" delay={0.1}>
+        <h3>Входит в стоимость</h3>
+        <ul>
+          <li><Check size={16} weight="bold" />Адаптив под телефон и планшет</li>
+          <li><Check size={16} weight="bold" />Подключение домена и хостинга</li>
+          <li><Check size={16} weight="bold" />Яндекс Метрика</li>
+          <li><Check size={16} weight="bold" />Инструкция по управлению</li>
+          <li><Check size={16} weight="bold" />Две недели правок после запуска</li>
+        </ul>
+      </Reveal>
     </section>
   )
 }
 
+// Финал: тёмно-зелёная полоса во всю ширину, заголовок «собирается» так же, как в первом экране
 function Final() {
+  const ref = useRef(null)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'center 55%'] })
+  const fvs = useTransform(scrollYProgress, (v) => morph(reduce ? 1 : v))
   return (
-    <section className="final">
+    <section className="final" ref={ref}>
+      <motion.h2 className="final-title" style={{ fontVariationSettings: fvs }}>Опишите задачу, посчитаю цену</motion.h2>
       <Reveal>
-        <h2 className="final-title">Опишите задачу, посчитаю цену</h2>
         <p className="lead">Ответ с вопросами, оценкой и сроком обычно в тот же день.</p>
         <div className="final-cta">
-          <a className="btn btn-light btn-lg" href={TG} target="_blank" rel="noreferrer"><TelegramLogo size={22} weight="fill" /> Написать в Telegram</a>
+          <a className="btn btn-mark btn-lg" href={TG} target="_blank" rel="noreferrer"><TelegramLogo size={22} weight="fill" /> Написать в Telegram</a>
           <a className="btn btn-outline-light btn-lg" href={WA} target="_blank" rel="noreferrer"><WhatsappLogo size={22} weight="fill" /> Написать в WhatsApp</a>
           <a className="final-mail" href={`mailto:${EMAIL}`}><EnvelopeSimple size={18} /> {EMAIL}</a>
         </div>
