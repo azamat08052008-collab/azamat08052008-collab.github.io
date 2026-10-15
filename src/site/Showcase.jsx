@@ -83,7 +83,7 @@ function Block({ w, n, active, onActive, wide, onTry }) {
       {w.guest && <a className="wb-guest" href={w.guest.src} target="_blank" rel="noreferrer">{w.guest.label} <ArrowUpRight size={14} weight="bold" /></a>}
       {!wide && (
         <div className="wb-device">
-          <Device kind="phone" src={w.src} title={`Демо: ${w.label}`} width={280} tint={w.tint} onTry={onTry} />
+          <Device kind="phone" src={w.src} title={`Демо: ${w.label}`} width={280} tint={w.tint} dark={w.statusDark} onTry={onTry} />
           <div className="wb-label">{w.label}</div>
         </div>
       )}
@@ -145,7 +145,7 @@ function Stage({ active, seen, W, progress, onTry }) {
           >
             {bar > 0 && <div className="st-bar"><i /><i /><i /><span>{w.label}</span></div>}
             <div className="st-screen" style={{ borderRadius: kind === 'phone' ? 36 : 0 }}>
-              {status > 0 && <div className="st-status" style={{ background: w.tint }}><StatusBar tint="transparent" style={{ height: STATUS }} /></div>}
+              {status > 0 && <div className="st-status" style={{ background: w.tint }}><StatusBar tint="transparent" dark={w.statusDark} style={{ height: STATUS }} /></div>}
               <div className="st-layers">
                 {WORK.map((x, i) => seen.has(i) && (
                   <div
